@@ -85,7 +85,9 @@ function autoDig()
                     if(time > 10)then
                         player.Character:MoveTo(treasureModel.Position)
                         time = 0;
-                        RewardsClient.Stop()
+                        if(player.PlayerGui.RewardsGui.RewardsFrame.ClaimButton.Visible == true) then
+                            RewardsClient.Stop()
+                        end
                         wait(0.5)
                         proximityPrompt:InputHoldBegin()
                         proximityPrompt:InputHoldEnd()
