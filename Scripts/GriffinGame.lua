@@ -76,7 +76,6 @@ function autoDig()
             end
             if treasureModel.Name == "TreasureModel" then
                 local time = 0;
-                local time2 = 0;
                 player.Character:MoveTo(treasureModel.Position)
                 wait(0.5)
                 local proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
@@ -86,13 +85,16 @@ function autoDig()
                     if(time > 10)then
                         player.Character:MoveTo(treasureModel.Position)
                         time = 0;
+                        RewardsClient.Stop()
                         wait(0.5)
                         proximityPrompt:InputHoldBegin()
                         proximityPrompt:InputHoldEnd()
+
                     end
                     time += 0.1
                     wait(0.1)
                 end
+                time = 0;
                 while player.PlayerGui.RewardsGui.RewardsFrame.ClaimButton.Visible == false do
                     if(time > 10)then
                         break
