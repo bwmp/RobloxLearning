@@ -14,6 +14,7 @@ local MainTab = Window:CreateTab("Main")
 
 local AutoPage = MainTab:CreateFrame("Automation")
 local SettingPage = MainTab:CreateFrame("Settings")
+local GamepassPage = MainTab:CreateFrame("Gamepasses")
 local ClaimCodesBool = false
 local AutoDigBool = false
 local AutoClaimBool = false
@@ -83,11 +84,8 @@ function autoDig()
                 proximityPrompt:InputHoldEnd()
                 while (#treasureModel:GetChildren() > 0) do
                     if(time > 10)then
-                        player.Character:MoveTo(treasureModel.Position)
                         time = 0;
-                        if(player.PlayerGui.RewardsGui.RewardsFrame.ClaimButton.Visible == true) then
-                            RewardsClient.Stop()
-                        end
+                        player.Character:MoveTo(treasureModel.Position)
                         wait(0.5)
                         proximityPrompt:InputHoldBegin()
                         proximityPrompt:InputHoldEnd()
@@ -96,26 +94,6 @@ function autoDig()
                     time += 0.1
                     wait(0.1)
                 end
-                time = 0;
-                while player.PlayerGui.RewardsGui.RewardsFrame.ClaimButton.Visible == false do
-                    if(time > 10)then
-                        break
-                    end
-                    time += 0.1
-                    wait(0.1)
-                end
-                for _, child in ipairs(player.PlayerGui.RewardsGui.RewardsFrame.SingleFrame:GetChildren()) do
-                    if(child.name == "UIListLayout") then
-                        continue
-                    else
-                        if(child.Visible) then
-                            if(child.Name == "Item") then
-                                logItem(child)
-                            end
-                        end
-                    end
-                end
-                RewardsClient.Stop()
             end
         end
     end
@@ -135,6 +113,17 @@ end)
 function autoClaimReward()
     while AutoClaimBool == true do
         if(player.PlayerGui.RewardsGui.RewardsFrame.Visible == true) then
+            for _, child in ipairs(player.PlayerGui.RewardsGui.RewardsFrame.SingleFrame:GetChildren()) do
+                if(child.name == "UIListLayout") then
+                    continue
+                else
+                    if(child.Visible) then
+                        if(child.Name == "Item") then
+                            logItem(child)
+                        end
+                    end
+                end
+            end
             RewardsClient.Stop()
         end
         wait(0.1)
@@ -159,6 +148,18 @@ DisableTreasureCollision = SettingPage:CreateToggle("Disable Treasure Collision"
             end
         end
     end
+end)
+
+x6Crates = GamepassPage:CreateButton("x6 Crate Open", "Unlock the ability to open 6 crates", function()
+    player.Gamepasses.x6Open.Value = true
+end)
+
+MultipleAccessories = GamepassPage:CreateButton("Multiple Accessories", "Unlock the ability to wear multiple accessories", function()
+    player.Gamepasses.MultipleAccessories.Value = true
+end)
+
+MaxPetEquip = GamepassPage:CreateButton("Max Pets Equip", "Unlock the ability to equip 3 pets", function()
+    player.Gamepasses.MaxPetEquip.Value = true
 end)
 
 function logItem(Item)

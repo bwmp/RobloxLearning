@@ -1,5 +1,9 @@
 {
     "robloxLsp.diagnostics.globals": [
-        "getgenv"
+        "getgenv",
+        "request"
+    ],
+    "robloxLsp.diagnostics.disable": [
+        "undefined-global"
     ]
 }
