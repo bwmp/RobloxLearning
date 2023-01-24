@@ -1193,6 +1193,60 @@ function library:CreateWindow(name, version, icon)
 				return UpdateToggle
 			end
 
+			function pagebuttons:CreateDropdown(name, options, callback)
+				name = name or "Dropdown"
+				options = options or {"Option 1", "Option 2"}
+				callback = callback or function() end
+				local Dropdown = Instance.new("TextButton")
+				local DropdownList = Instance.new("Frame")
+				local DropdownTitle = Instance.new("TextLabel")
+				local DropdownOption = {}
+			  
+				Dropdown.Name = "Dropdown"
+				Dropdown.Parent = SectionContainer
+				Dropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+				Dropdown.Size = UDim2.new(1, 0, 0, 40)
+				Dropdown.Text = name
+				Dropdown.Font = Enum.Font.GothamBlack
+			  
+				DropdownList.Name = "DropdownList"
+				DropdownList.Parent = Dropdown
+				DropdownList.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownList.Visible = false
+				DropdownList.Size = UDim2.new(1, 0, 0, 0)
+			  
+				DropdownTitle.Name = "DropdownTitle"
+				DropdownTitle.Parent = DropdownList
+				DropdownTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownTitle.BackgroundTransparency = 1.000
+				DropdownTitle.Size = UDim2.new(1, 0, 0, 20)
+				DropdownTitle.Font = Enum.Font.GothamBlack
+				DropdownTitle.Text = name
+				DropdownTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownTitle.TextSize = 12.000
+				DropdownTitle.TextXAlignment = Enum.TextXAlignment.Left
+			  
+				for i, option in ipairs(options) do
+				  DropdownOption[i] = Instance.new("TextButton")
+				  DropdownOption[i].Name = "Option"
+				  DropdownOption[i].Parent = DropdownList
+				  DropdownOption[i].BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				  DropdownOption[i].Size = UDim2.new(1, 0, 0, 20)
+				  DropdownOption[i].Position = UDim2.new(0, 0, 0, 20 + (20 * (i - 1)))
+				  DropdownOption[i].Font = Enum.Font.Gotham
+				  DropdownOption[i].Text = option
+				  DropdownOption[i].TextColor3 = Color3.fromRGB(159, 159, 159)
+				  DropdownOption[i].TextSize = 12.000
+				  DropdownOption[i].TextXAlignment = Enum.TextXAlignment.Left
+				  DropdownOption[i].MouseButton1Click:Connect(function()
+					callback(option)
+				  end)
+				end
+			  
+				Dropdown.MouseButton1Click:Connect(function()
+				  DropdownList.Visible = not DropdownList.Visible
+				end)
+			end
 
 			function pagebuttons:CreateColorPicker(name, callback)
 				-- Very Buggy
@@ -1480,10 +1534,6 @@ function library:CreateWindow(name, version, icon)
 				colourSlider:GetPropertyChangedSignal("Position"):Connect(updateColourPreview)
 				darknessSlider:GetPropertyChangedSignal("Position"):Connect(updateColourPreview)
 			end
-
-
-
-
 
 			function CreateNotification(Name, Description, Callback)
 				Name = Name or "Name"
