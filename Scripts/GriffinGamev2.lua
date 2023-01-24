@@ -184,7 +184,7 @@ CrateSelector = CratesSection:Dropdown("Dropdown",
     Crate = t
 end)
 
-CrateAmountSelector = sec:Slider("Amount", 1,12,1,1,"Slider", function(t)
+CrateAmountSelector = CratesSection:Slider("Amount", 1,12,1,1,"Slider", function(t)
     Amount = t
 end)
 
@@ -200,7 +200,7 @@ OpenCrates = CratesSection:Button("Open Crates", "Open Crates", function()
     
     local drops = game:GetService("ReplicatedStorage").Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
     if(LogCratesBool) then
-        for i, v in pairs(returnValue) do
+        for i, v in pairs(drops) do
             for i2, v2 in pairs(v.Drops) do
                 LogCrateReward(v2)
             end
