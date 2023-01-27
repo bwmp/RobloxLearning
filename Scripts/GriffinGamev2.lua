@@ -12,7 +12,7 @@ local win = SolarisLib:New({
     Name = "Griffins Destiny",
     FolderToSave = "GriffinsDestiny"
 })
-    
+
 local AutoPage = win:Tab("Automation")
 local SettingsPage = win:Tab("Settings")
 local GamepassPage = win:Tab("Gamepass")
@@ -25,6 +25,8 @@ local AutoClaimBool = false
 local Crate = ""
 local CrateAmount = 1
 local LogCratesBool = false
+local itmsNeeded = {}
+local OpenUntilGotItemsBool = false
 -- End Settings
 local AutoFarmSection = AutoPage:Section("Auto Farm")
 AutoFarmSection:Button("Anti AFK", function()
@@ -73,6 +75,7 @@ function autoDig()
             end
             if treasureModel.Name == "TreasureModel" then
                 local time = 0;
+                local stuck = 0;
                 player.Character:MoveTo(treasureModel.Position)
                 wait(0.5)
                 local proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
@@ -82,10 +85,14 @@ function autoDig()
                     if(time > 10)then
                         time = 0;
                         player.Character:MoveTo(treasureModel.Position)
-                        wait(0.5)
+                        if(stuck > 5)then
+                            stuck = 0;
+                            break
+                        end
+                        stuck += 1
+                        wait(1.5)
                         proximityPrompt:InputHoldBegin()
                         proximityPrompt:InputHoldEnd()
-
                     end
                     time += 0.1
                     wait(0.1)
@@ -98,7 +105,7 @@ end
 AutoClaimReward = AutoFarmSection:Toggle("Auto Claim", false, "Auto Claim", function(t)
     if(t == true) then
         AutoClaimBool = true
-        autoClaim()
+        autoClaimReward()
     else
         AutoClaimBool = false
     end
@@ -158,7 +165,7 @@ MaxPetEquip = GamepassSection:Toggle("Max Pet Equip", false, "Max Pet Equip", fu
 end)
 
 local CratesSection = CratesPage:Section("Crates")
-CrateSelector = CratesSection:Dropdown("Dropdown", 
+CrateSelector = CratesSection:Dropdown("Dropdown",
 {
     "FurCrate",
     "BasicCrate",
@@ -178,30 +185,82 @@ CrateSelector = CratesSection:Dropdown("Dropdown",
     "DarkCrate",
     "LightCrate",
     "HorrorCrate",
-    "HaloCrate"
+    "HaloCrate",
+    "GalaxyCrate"
 }
 ,"","Dropdown", function(t)
     Crate = t
 end)
 
 CrateAmountSelector = CratesSection:Slider("Amount", 1,12,1,1,"Slider", function(t)
-    Amount = t
+    CrateAmount = t
 end)
 
 LogCrates = CratesSection:Toggle("Log Crates", false, "Log Crates", function(t)
     LogCratesBool = t
 end)
 
-OpenCrates = CratesSection:Button("Open Crates", "Open Crates", function()
+ItemsNeeded = CratesSection:Textbox("Items Needed", false, function(t)
+    itmsNeeded = getItems(t)
+    itemsNeededLable:Set("Items Needed: " .. #itmsNeeded)
+end)
+
+function getItems(str)
+    local noscapescript = string.gsub(str, "%s+", "")
+    noscapescript = string.lower(noscapescript)
+    return string.split(noscapescript, ",")
+end
+
+itemsNeededLable = CratesSection:Label("Items Needed: 0")
+
+OpenUntilGotItems = CratesSection:Toggle("Open crates until you have all items needed", false, "Open crates until you have all items needed", function(t)
+    if(t == true) then
+        OpenUntilGotItemsBool = true
+        openUntilGotItems()
+    else
+        OpenUntilGotItemsBool = false
+    end
+end)
+
+function openUntilGotItems()
     local args = {
         [1] = Crate,
         [2] = CrateAmount
     }
-    
+    while OpenUntilGotItemsBool == true do
+        local drops = game:GetService("ReplicatedStorage").Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
+        print(#itmsNeeded)
+        if(#itmsNeeded < 0) then
+            print("done")
+            OpenUntilGotItemsBool = false
+            return
+        end
+        for i, v in pairs(drops) do
+            for i2, v2 in pairs(v) do
+                print(v2.Item, v2.Rarity, v2.Type)
+                if(table.find(itmsNeeded, v2.Item:lower()) == true) then
+                    table.remove(itmsNeeded, table.find(itmsNeeded, v2.Item:lower()))
+                    itemsNeededLable:Set("Items Needed: " .. #itmsNeeded)
+                end
+                if(LogCratesBool) then
+                    LogCrateReward(v2)
+                end
+            end
+        end
+        wait(1)
+    end
+end
+
+OpenCrates = CratesSection:Button("Open Crates", function()
+    local args = {
+        [1] = Crate,
+        [2] = CrateAmount
+    }
+
     local drops = game:GetService("ReplicatedStorage").Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
     if(LogCratesBool) then
         for i, v in pairs(drops) do
-            for i2, v2 in pairs(v.Drops) do
+            for i2, v2 in pairs(v) do
                 LogCrateReward(v2)
             end
         end
@@ -210,7 +269,19 @@ end)
 
 function SplitByCase(string)
     local words = {}
-    for word in string.gmatch(originalString, "[%a]+[A-Z]?") do
+    local word = ""
+    for i = 1, #string do
+        local char = string:sub(i, i)
+        if char == char:upper() then
+            if word ~= "" then
+                table.insert(words, word)
+            end
+            word = char
+        else
+            word = word .. char
+        end
+    end
+    if word ~= "" then
         table.insert(words, word)
     end
     return table.concat(words, " ")
@@ -223,26 +294,26 @@ function LogCrateReward(reward)
     local rarity = reward.Rarity
     if(rarity == "Common") then
         Color = 0xFFFFFF
-        msg = "Common Item Found!"
+        msg = "Common Item Opened!"
         url = getgenv().commonURL
     elseif(rarity == "Uncommon") then
         Color = 0x00FF00
-        msg = "Uncommon Item Found!"
+        msg = "Uncommon Item Opened!"
         url = getgenv().uncommonURL
     elseif(rarity == "Rare") then
         Color = 0x0000FF
-        msg = "Rare Item Found!"
+        msg = "Rare Item Opened!"
         url = getgenv().rareURL
     elseif(rarity == "Epic") then
         Color = 0xFF00FF
-        msg = "Epic Item Found!"
+        msg = "Epic Item Opened!"
         url = getgenv().epicURL
     elseif(rarity == "Legendary") then
         Color = 0xFF0000
-        msg = "Legendary Item Found!"
+        msg = "Legendary Item Opened!"
         url = getgenv().legendaryURL
     end
-    syn.request({
+    local response = syn.request({
         Url = url,
         Method = "POST",
         Headers = {
@@ -252,7 +323,7 @@ function LogCrateReward(reward)
             content = msg,
             embeds = {
                 {
-                    title = "New Item!",
+                    title = "New Crate Reward!",
                     color = Color,
                     fields = {
                         {
