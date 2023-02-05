@@ -166,7 +166,7 @@ function Trip()
     if(tripped) then
         tripped = false
         LocalPlayer.Character.Humanoid.PlatformStand = false
-        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,0)
+        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(90,0,0)
     else
         tripped = true
         LocalPlayer.Character.Humanoid.PlatformStand = true
