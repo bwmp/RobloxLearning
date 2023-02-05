@@ -50,12 +50,23 @@ StallsSection:Button("Teleport To Stall", function()
     LocalPlayer.Character:MoveTo(CurrentStall.ProxPart.Position)
 end)
 
-StallsSection:Button("ClaimStall", function()
+StallsSection:Button("Claim Stall", function()
     for i, v in pairs(stalls:GetChildren()) do
         v.CloseStall:FireServer()
     end
     LocalPlayer.Character:MoveTo(CurrentStall.ProxPart.Position)
     fireproximityprompt(CurrentStall.ProxPart.ProximityPrompt)
+end)
+
+StallsSection:Button("Close All Stalls", function()
+    for i, v in pairs(stalls:GetChildren()) do
+        v.CloseStall:FireServer()
+        LocalPlayer.Character:MoveTo(v.ProxPart.Position)
+        wait(0.5)
+        fireproximityprompt(v.ProxPart.ProximityPrompt)
+        v.CloseStall:FireServer()
+        wait(0.5)
+    end
 end)
 
 FlipsSection:Bind("Front Flip", Enum.KeyCode.X, false, "BindNormal", function()
