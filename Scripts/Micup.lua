@@ -25,10 +25,11 @@ local Movement = win:Tab("Movement")
 
 local RandomSection = Main:Section("Random")
 local FlipsSection = Movement:Section("Flips")
+local MemeSection = Movement:Section("Memes")
 local StallsSection = Stalls:Section("Stalls")
 
 -- bools
-
+local tripped = false
 --end bools
 
 StallsSection:Dropdown("Selected Stall", {"Stall 1","Stall 2","Stall 3","Stall 4","Stall 5"},"Stall 1","Dropdown", function(t)
@@ -76,8 +77,11 @@ FlipsSection:Bind("Right Twirl", Enum.KeyCode.N, false, "BindNormal", function()
     RightTwirl()
 end)
 
---Flip Funcs
+MemeSection:Bind("Trip", Enum.KeyCode.M, false, "BindNormal", function()
+    Trip()
+end)
 
+--Flip Funcs
 function Frontflip()
     LocalPlayer.Character.Humanoid:ChangeState("Jumping")
     wait()
@@ -157,3 +161,19 @@ function RightTwirl()
     LocalPlayer.Character.Humanoid.Sit = false
 end
 --end Flip Funcs
+--Meme Movement Funcs
+function Trip()
+    if(tripped) then
+        tripped = false
+        LocalPlayer.Character.Humanoid.PlatformStand = false
+        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,0)
+    else
+        tripped = true
+        LocalPlayer.Character.Humanoid.PlatformStand = true
+        for i = 1,90 do 
+            delay(i/720,function()
+                LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(-0.0174533,0,0)
+            end)
+        end
+    end
+end
