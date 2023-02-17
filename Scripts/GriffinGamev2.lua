@@ -29,6 +29,8 @@ local itmsNeeded = {}
 local OpenUntilGotItemsBool = false
 -- End Settings
 local AutoFarmSection = AutoPage:Section("Auto Farm")
+
+
 AutoFarmSection:Button("Anti AFK", function()
     player.Idled:Connect(function()
         VU:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
@@ -129,6 +131,30 @@ function autoClaimReward()
         wait(0.1)
     end
 end
+AutoFarmSection:Button("Chocolates1", function()
+    for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
+        player.Character:MoveTo(chocolate.Position)
+        wait(0.2)
+        local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+        fireproximityprompt(proximityPrompt)
+    end
+end)
+AutoFarmSection:Button("Chocolates2", function()
+    for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates2:GetChildren()) do
+        player.Character:MoveTo(chocolate.Position)
+        wait(0.2)
+        local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+        fireproximityprompt(proximityPrompt)
+    end
+end)
+AutoFarmSection:Button("Chocolates3", function()
+    for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates3:GetChildren()) do
+        player.Character:MoveTo(chocolate.Position)
+        wait(0.2)
+        local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+        fireproximityprompt(proximityPrompt)
+    end
+end)
 
 local SettingsSection = SettingsPage:Section("Settings")
 
