@@ -72,13 +72,14 @@ end)
 function autoDig()
     while AutoDigBool do
         for _, treasureModel in ipairs(game:GetService("Workspace").Interactions.Minigames.TreasureHunt:GetChildren()) do
+            print(treasureModel.Name)
             if(AutoDigBool == false) then
                 break
             end
             if treasureModel.Name == "TreasureModel" then
                 local time = 0;
                 local stuck = 0;
-                player.Character:MoveTo(treasureModel.Position)
+                player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame + Vector3.new(0, 5, 0)
                 wait(0.5)
                 local proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
                 proximityPrompt:InputHoldBegin()
@@ -86,7 +87,7 @@ function autoDig()
                 while (#treasureModel:GetChildren() > 0) do
                     if(time > 10)then
                         time = 0;
-                        player.Character:MoveTo(treasureModel.Position)
+                        player.Character.HumanoidRootPart.Cframe = treasureModel.CFrame
                         if(stuck > 5)then
                             stuck = 0;
                             break
