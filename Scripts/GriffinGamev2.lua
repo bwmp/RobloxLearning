@@ -27,6 +27,7 @@ local CrateAmount = 1
 local LogCratesBool = false
 local itmsNeeded = {}
 local OpenUntilGotItemsBool = false
+local AutoOpenEggsBool = false
 -- End Settings
 local AutoFarmSection = AutoPage:Section("Auto Farm")
 
@@ -132,6 +133,35 @@ function autoClaimReward()
         wait(0.1)
     end
 end
+
+AutoFarmSection:Toggle("Auto Open Eggs", false, "Auto Open Eggs", function(t)
+    AutoOpenEggsBool = t
+    for i = 1, 3 do
+        local args = {
+            [1] = player.Data.Characters["Slot"..i].Eggs[1].Name,
+            [2] = "Eggs"
+        }
+        game:GetService("ReplicatedStorage").Remotes.EquipPetRemote:InvokeServer(unpack(args))
+    end
+end)
+function EggAddedOrRemoved(slot)
+    if AutoOpenEggsBool == false then
+        return
+    end
+    
+    local args = {
+        [1] = player.Data.Characters[slot].Eggs[1].Name,
+        [2] = "Eggs"
+    }
+    game:GetService("ReplicatedStorage").Remotes.EquipPetRemote:InvokeServer(unpack(args))
+end
+
+for i = 1, 3 do
+    player.Data.Characters["Slot"..i].Eggs.ChildAdded:Connect(function() EggAddedOrRemoved("Slot"..i) end)
+    player.Data.Characters["Slot"..i].Eggs.ChildRemoved:Connect(function() EggAddedOrRemoved("Slot"..i) end)
+end
+
+
 AutoFarmSection:Button("Chocolates1", function()
     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
         player.Character:MoveTo(chocolate.Position)
