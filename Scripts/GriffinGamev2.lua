@@ -77,7 +77,7 @@ function autoDig()
             if(AutoDigBool == false) then
                 break
             end
-            if treasureModel.Name == "TreasureModel" then
+            if treasureModel:IsA("MeshPart") then
                 local time = 0;
                 local stuck = 0;
                 player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame + Vector3.new(0, 5, 0)
@@ -117,50 +117,50 @@ end)
 function autoClaimReward()
     while AutoClaimBool == true do
         if(player.PlayerGui.RewardsGui.RewardsFrame.Visible == true) then
-            for _, child in ipairs(player.PlayerGui.RewardsGui.RewardsFrame.SingleFrame:GetChildren()) do
-                if(child.name == "UIListLayout") then
-                    continue
-                else
-                    if(child.Visible) then
-                        if(child.Name == "Item") then
-                            logItem(child)
-                        end
-                    end
-                end
-            end
+            -- for _, child in ipairs(player.PlayerGui.RewardsGui.RewardsFrame.SingleFrame:GetChildren()) do
+            --     if(child.name == "UIListLayout") then
+            --         continue
+            --     else
+            --         if(child.Visible) then
+            --             if(child.Name == "Item") then
+            --                 logItem(child)
+            --             end
+            --         end
+            --     end
+            -- end
             RewardsClient.Stop()
         end
         wait(0.1)
     end
 end
-
 AutoFarmSection:Toggle("Auto Open Eggs", false, "Auto Open Eggs", function(t)
     AutoOpenEggsBool = t
-    for i = 1, 3 do
-        local args = {
-            [1] = player.Data.Characters["Slot"..i].Eggs[1].Name,
-            [2] = "Eggs"
-        }
-        game:GetService("ReplicatedStorage").Remotes.EquipPetRemote:InvokeServer(unpack(args))
+    if(AutoOpenEggsBool == true) then
+        for i = 1, 3 do
+            local args = {
+                [1] = player.Data.Characters["Slot"..i].Eggs:GetChildren()[1].Name,
+                [2] = "Eggs"
+            }
+            game:GetService("ReplicatedStorage").Remotes.EquipPetRemote:InvokeServer(unpack(args))
+        end
     end
 end)
 function EggAddedOrRemoved(slot)
     if AutoOpenEggsBool == false then
         return
     end
-    
+
     local args = {
-        [1] = player.Data.Characters[slot].Eggs[1].Name,
+        [1] = player.Data.Characters[slot].Eggs:GetChildren()[1].Name,
         [2] = "Eggs"
     }
+    print("Equipped Egg: "..args[1])
     game:GetService("ReplicatedStorage").Remotes.EquipPetRemote:InvokeServer(unpack(args))
 end
-
 for i = 1, 3 do
     player.Data.Characters["Slot"..i].Eggs.ChildAdded:Connect(function() EggAddedOrRemoved("Slot"..i) end)
     player.Data.Characters["Slot"..i].Eggs.ChildRemoved:Connect(function() EggAddedOrRemoved("Slot"..i) end)
 end
-
 
 AutoFarmSection:Button("Chocolates1", function()
     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
@@ -286,15 +286,12 @@ function openUntilGotItems()
     }
     while OpenUntilGotItemsBool == true do
         local drops = game:GetService("ReplicatedStorage").Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
-        print(#itmsNeeded)
         if(#itmsNeeded < 0) then
-            print("done")
             OpenUntilGotItemsBool = false
             return
         end
         for i, v in pairs(drops) do
             for i2, v2 in pairs(v) do
-                print(v2.Item, v2.Rarity, v2.Type)
                 if(table.find(itmsNeeded, v2.Item:lower()) == true) then
                     table.remove(itmsNeeded, table.find(itmsNeeded, v2.Item:lower()))
                     itemsNeededLable:Set("Items Needed: " .. #itmsNeeded)
