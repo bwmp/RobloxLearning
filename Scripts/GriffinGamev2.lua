@@ -1,10 +1,7 @@
 local SolarisLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Oli-idk/RobloxLearning/main/Scripts/UILib2.lua"))()
 local player = game.Players.LocalPlayer
 local VU = game:GetService("VirtualUser")
-local UsedCodes = player.Data.Codes
-local codesToClaim = {"30klikes", "40klikes", "50klikes", "happychinesenewyear", "HappyValentines"}
 local http = game:GetService("HttpService")
-local RedeemCodeRemote = game:GetService("ReplicatedStorage").Remotes.RedeemCodeRemote
 local RewardsClient = require(game:GetService("ReplicatedStorage")["_replicationFolder"].RewardsClient);
 
 
@@ -19,7 +16,6 @@ local GamepassPage = win:Tab("Gamepass")
 local CratesPage = win:Tab("Crates")
 
 -- Settings
-local ClaimCodesBool = false
 local AutoDigBool = false
 local AutoClaimBool = false
 local Crate = ""
@@ -39,28 +35,6 @@ AutoFarmSection:Button("Anti AFK", function()
         VU:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
     end)
 end)
-
-ClaimCodes = AutoFarmSection:Toggle("Claim Codes", false, "Claim Codes", function(t)
-    if(t == true) then
-        ClaimCodesBool = true
-        autoClaimCodes()
-    else
-        ClaimCodesBool = false
-    end
-end)
-function claimCodes()
-    for _, code in pairs(codesToClaim) do
-        RedeemCodeRemote:InvokeServer(code)
-        wait(1)
-    end
-end
-function autoClaimCodes()
-    while ClaimCodesBool do
-        UsedCodes:ClearAllChildren()
-        wait(1)
-        claimCodes()
-    end
-end
 
 AutoDig = AutoFarmSection:Toggle("Auto Dig", false, "Auto Dig", function(t)
     if(t == true) then
