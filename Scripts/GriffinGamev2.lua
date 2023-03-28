@@ -1,10 +1,12 @@
 local SolarisLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Oli-idk/RobloxLearning/main/Scripts/UILib2.lua"))()
 local player = game.Players.LocalPlayer
+local players = game:GetService("Players")
 local VU = game:GetService("VirtualUser")
 local http = game:GetService("HttpService")
 local RewardsClient = require(game:GetService("ReplicatedStorage")["_replicationFolder"].RewardsClient);
-
-
+local LevelUpClient = require(game:GetService("ReplicatedStorage")["_replicationFolder"].LevelUpClient);
+local treasureHuntClient = game:GetService("ReplicatedStorage")["_replicationFolder"].TreasureHuntClient;
+local treasureHuntMinigame = game:GetService("Workspace").Interactions.Minigames.TreasureHunt;
 local win = SolarisLib:New({
     Name = "Griffins Destiny",
     FolderToSave = "GriffinsDestiny"
@@ -15,18 +17,26 @@ local SettingsPage = win:Tab("Settings")
 local GamepassPage = win:Tab("Gamepass")
 local CratesPage = win:Tab("Crates")
 
--- Settings
+--#region Settings
+local Crate = ""
+local delay1 = 5
+local delay2 = 7
+local target = ""
+local farmingSpot = "Treasure"
+local slot = "Slot1"
+local itmsNeeded = {}
+local CrateAmount = 1
 local AutoDigBool = false
 local AutoClaimBool = false
-local Crate = ""
-local CrateAmount = 1
 local LogCratesBool = false
-local itmsNeeded = {}
-local OpenUntilGotItemsBool = false
+local AutoTradeBool = false
 local AutoOpenEggsBool = false
--- End Settings
-local AutoFarmSection = AutoPage:Section("Auto Farm")
+local AutoAcceptTradeBool = false
+local OpenUntilGotItemsBool = false
+--#endregion
 
+--#region Farming
+local AutoFarmSection = AutoPage:Section("Auto Farm")
 
 AutoFarmSection:Button("Anti AFK", function()
     player.Idled:Connect(function()
@@ -34,6 +44,10 @@ AutoFarmSection:Button("Anti AFK", function()
         wait(1)
         VU:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
     end)
+end)
+
+AutoFarmSection:Dropdown("Farming Spot", {"Treasure", "Trinkets", "XP", "ALL"},"Treasure","Dropdown", function(t)
+    farmingSpot = t
 end)
 
 AutoDig = AutoFarmSection:Toggle("Auto Dig", false, "Auto Dig", function(t)
@@ -45,13 +59,18 @@ AutoDig = AutoFarmSection:Toggle("Auto Dig", false, "Auto Dig", function(t)
     end
 end)
 function autoDig()
+    if(farmingSpot == "ALL") then
+        location = treasureHuntMinigame
+    else
+        location = treasureHuntMinigame[farmingSpot]
+    end
     while AutoDigBool do
-        for _, treasureModel in ipairs(game:GetService("Workspace").Interactions.Minigames.TreasureHunt:GetChildren()) do
-            print(treasureModel.Name)
+        for _, treasureModel in ipairs(location:GetDescendants()) do
             if(AutoDigBool == false) then
                 break
             end
             if treasureModel:IsA("MeshPart") then
+                print("Digging")
                 local time = 0;
                 local stuck = 0;
                 player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame + Vector3.new(0, 5, 0)
@@ -77,6 +96,7 @@ function autoDig()
                 end
             end
         end
+        wait(0.1)
     end
 end
 
@@ -90,6 +110,9 @@ AutoClaimReward = AutoFarmSection:Toggle("Auto Claim", false, "Auto Claim", func
 end)
 function autoClaimReward()
     while AutoClaimBool == true do
+        if(player.PlayerGui.LevelUpGui.UnlocksFrame.Visible == true) then
+            LevelUpClient.Stop()
+        end
         if(player.PlayerGui.RewardsGui.RewardsFrame.Visible == true) then
             -- for _, child in ipairs(player.PlayerGui.RewardsGui.RewardsFrame.SingleFrame:GetChildren()) do
             --     if(child.name == "UIListLayout") then
@@ -136,51 +159,155 @@ for i = 1, 3 do
     player.Data.Characters["Slot"..i].Eggs.ChildRemoved:Connect(function() EggAddedOrRemoved("Slot"..i) end)
 end
 
-AutoFarmSection:Button("Chocolates1", function()
-    for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
-        player.Character:MoveTo(chocolate.Position)
-        wait(0.2)
-        local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
-        fireproximityprompt(proximityPrompt)
+-- AutoFarmSection:Button("Chocolates1", function()
+--     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
+--         player.Character:MoveTo(chocolate.Position)
+--         wait(0.2)
+--         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+--         fireproximityprompt(proximityPrompt)
+--     end
+-- end)
+-- AutoFarmSection:Button("Chocolates2", function()
+--     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates2:GetChildren()) do
+--         player.Character:MoveTo(chocolate.Position)
+--         wait(0.2)
+--         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+--         fireproximityprompt(proximityPrompt)
+--     end
+-- end)
+-- AutoFarmSection:Button("Chocolates3", function()
+--     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates3:GetChildren()) do
+--         player.Character:MoveTo(chocolate.Position)
+--         wait(0.2)
+--         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+--         fireproximityprompt(proximityPrompt)
+--     end
+-- end)
+
+--#endregion
+
+--#region Trading
+local TradeSection = AutoPage:Section("Trade")
+TradeSection:Dropdown("Slot", {"Slot1", "Slot2", "Slot3"},"Slot1","Dropdown", function(t)
+    slot = t
+end)
+local targetDropdown = TradeSection:Dropdown("Target", {},"None","Dropdown", function(t)
+    target = t
+end)
+TradeSection:Button("Reload Players", function()
+    targetDropdown:Refresh(GetPlayers(), true)
+end)
+function GetPlayers()
+    local players = {}
+    for _, plr in ipairs(game:GetService("Players"):GetChildren()) do
+        table.insert(players, plr.Name)
+    end
+    return players
+end
+targetDropdown:Refresh(GetPlayers(), true)
+TradeSection:Toggle("Auto Trade", false, "Auto Trade", function(t)
+    if(t == true) then
+        AutoTradeBool = true
+        autoTrade()
+    else
+        AutoTradeBool = false
     end
 end)
-AutoFarmSection:Button("Chocolates2", function()
-    for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates2:GetChildren()) do
-        player.Character:MoveTo(chocolate.Position)
-        wait(0.2)
-        local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
-        fireproximityprompt(proximityPrompt)
+function autoTrade()
+    while AutoTradeBool == true do
+        local Accessories = player.Data.Characters[slot].Accessories:GetChildren()
+        local args = {
+            [1] = "SendRequest",
+            [2] = game:GetService("Players")[target]
+        }
+        player.Remotes.TradeRequestRemote:FireServer(unpack(args))
+    
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
+    
+        for i = 1, 9 do
+            local args = {
+                [1] = "AddTradeItem",
+                [2] = {
+                    ["Amount"] = 1,
+                    ["Name"] = Accessories[i].Name,
+                    ["ItemType"] = "Accessories",
+                    ["Slot"] = "Slot1"
+                }
+            }
+            game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+        end
+    
+        local args = {
+            [1] = "AcceptTrade"
+        }
+    
+        game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+    
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
     end
-end)
-AutoFarmSection:Button("Chocolates3", function()
-    for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates3:GetChildren()) do
-        player.Character:MoveTo(chocolate.Position)
-        wait(0.2)
-        local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
-        fireproximityprompt(proximityPrompt)
+end
+
+TradeSection:Toggle("Auto Accept", false, "Auto Accept", function(t)
+    if(t == true) then
+        AutoAcceptBool = true
+        autoAccept()
+    else
+        AutoAcceptBool = false
     end
 end)
 
+function autoAccept()
+    while AutoAcceptBool == true do
+        local args = {
+            [1] = "AcceptRequest"
+        }
+        players[target].Remotes.TradeRequestRemote:FireServer(unpack(args))
+        print("Sent accept request to " .. target)
+        wait(delay1)
+        local args2 = {
+            [1] = "AcceptTrade"
+        }
+        coroutine.wrap(function()
+            game:GetService("ReplicatedStorage").Remotes:FindFirstChild(target.."-"..player.Name.."TradeRemote"):InvokeServer(unpack(args2))
+        end)()
+        print("Accepted trade with " .. target)
+        wait(delay2)
+        print("looping")
+    end
+end
+TradeSection:Slider("delay1", 0,10,7,0.5,"Slider", function(t)
+    delay1 = t
+end)
+TradeSection:Slider("delay2", 0,10,7,0.5,"Slider", function(t)
+    delay1 = t
+end)
+--#endregion
+
+--#region Settings
 local SettingsSection = SettingsPage:Section("Settings")
 
 DisableTreasureCollision = SettingsSection:Toggle("Disable Treasure Collision", false, "Disable Treasure Collision", function(t)
     if(t == true) then
-        game:GetService("ReplicatedStorage")["_replicationFolder"].TreasureHuntClient.TreasureModel.CanCollide = false
-        for _, treasureModel in ipairs(game:GetService("Workspace").Interactions.Minigames.TreasureHunt:GetChildren()) do
-            if treasureModel.Name == "TreasureModel" then
-                treasureModel.CanCollide = false
+        treasureHuntClient.Treasure.CanCollide = false
+        treasureHuntClient.XP.CanCollide = false
+        treasureHuntClient.Trinkets.CanCollide = false
+        for i,v in pairs(treasureHuntMinigame:GetDescendants()) do
+            if v:IsA("MeshPart") then
+                v.CanCollide = false
             end
         end
     else
-        game:GetService("ReplicatedStorage")["_replicationFolder"].TreasureHuntClient.TreasureModel.CanCollide = false
-        for _, treasureModel in ipairs(game:GetService("Workspace").Interactions.Minigames.TreasureHunt:GetChildren()) do
-            if treasureModel.Name == "TreasureModel" then
-                treasureModel.CanCollide = true
+        treasureHuntClient.Treasure.CanCollide = false
+        for i,v in pairs(treasureHuntMinigame:GetDescendants()) do
+            if v:IsA("MeshPart") then
+                v.CanCollide = false
             end
         end
     end
 end)
+--#endregion
 
+--#region Gamepass
 local GamepassSection = GamepassPage:Section("Gamepass")
 
 x6Crates = GamepassSection:Toggle("x6 Crates", false, "x6 Crates", function(t)
@@ -194,7 +321,9 @@ end)
 MaxPetEquip = GamepassSection:Toggle("Max Pet Equip", false, "Max Pet Equip", function(t)
     player.Gamepasses.MaxPetEquip.Value = t
 end)
+--#endregion
 
+--#region Crates
 local CratesSection = CratesPage:Section("Crates")
 CrateSelector = CratesSection:Dropdown("Dropdown",
 {
@@ -217,7 +346,9 @@ CrateSelector = CratesSection:Dropdown("Dropdown",
     "LightCrate",
     "HorrorCrate",
     "HaloCrate",
-    "GalaxyCrate"
+    "GalaxyCrate",
+    "RoyalCrate",
+    "TropicalCrate"
 }
 ,"","Dropdown", function(t)
     Crate = t
@@ -294,6 +425,8 @@ OpenCrates = CratesSection:Button("Open Crates", function()
         end
     end
 end)
+
+--#endregion
 
 function SplitByCase(string)
     local words = {}
