@@ -81,7 +81,7 @@ function autoDig()
                 while (#treasureModel:GetChildren() > 0) do
                     if(time > 10)then
                         time = 0;
-                        player.Character.HumanoidRootPart.Cframe = treasureModel.CFrame
+                        player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame
                         if(stuck > 5)then
                             stuck = 0;
                             break
