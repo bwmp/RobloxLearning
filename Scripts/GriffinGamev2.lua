@@ -22,7 +22,7 @@ local Crate = ""
 local delay1 = 5
 local delay2 = 7
 local target = ""
-local farmingSpot = "Treasure"
+local farmingSpots = {["Treasure"] = true, ["Trinkets"] = false, ["XP"] = false}
 local slot = "Slot1"
 local itmsNeeded = {}
 local CrateAmount = 1
@@ -36,19 +36,20 @@ local OpenUntilGotItemsBool = false
 --#endregion
 
 --#region Farming
+local FarmingSpotsSection = AutoPage:Section("Farming Spots")
+FarmingSpotsSection:Toggle("Treasure", true, "Treasure", function(t)
+    farmingSpots["Treasure"] = t
+end)
+
+FarmingSpotsSection:Toggle("Trinkets", false, "Trinkets", function(t)
+    farmingSpots["Trinkets"] = t
+end)
+
+FarmingSpotsSection:Toggle("XP", false, "XP", function(t)
+    farmingSpots["XP"] = t
+end)
+
 local AutoFarmSection = AutoPage:Section("Auto Farm")
-
-AutoFarmSection:Button("Anti AFK", function()
-    player.Idled:Connect(function()
-        VU:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-        wait(1)
-        VU:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    end)
-end)
-
-AutoFarmSection:Dropdown("Farming Spot", {"Treasure", "Trinkets", "XP", "ALL"},"Treasure","Dropdown", function(t)
-    farmingSpot = t
-end)
 
 AutoDig = AutoFarmSection:Toggle("Auto Dig", false, "Auto Dig", function(t)
     if(t == true) then
@@ -59,25 +60,22 @@ AutoDig = AutoFarmSection:Toggle("Auto Dig", false, "Auto Dig", function(t)
     end
 end)
 function autoDig()
-    if(farmingSpot == "ALL") then
-        location = treasureHuntMinigame
-    else
-        location = treasureHuntMinigame[farmingSpot]
-    end
     while AutoDigBool do
-        for _, treasureModel in ipairs(location:GetDescendants()) do
+        for _, treasureModel in ipairs(treasureHuntMinigame:GetDescendants()) do
             if(AutoDigBool == false) then
                 break
             end
             if treasureModel:IsA("MeshPart") then
                 print("Digging")
+                if (farmingSpots[treasureModel.Name] == false) then
+                    continue
+                end
                 local time = 0;
                 local stuck = 0;
                 player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame + Vector3.new(0, 5, 0)
                 wait(0.5)
                 local proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
-                proximityPrompt:InputHoldBegin()
-                proximityPrompt:InputHoldEnd()
+                fireproximityprompt(proximityPrompt)
                 while (#treasureModel:GetChildren() > 0) do
                     if(time > 10)then
                         time = 0;
@@ -88,8 +86,7 @@ function autoDig()
                         end
                         stuck += 1
                         wait(1.5)
-                        proximityPrompt:InputHoldBegin()
-                        proximityPrompt:InputHoldEnd()
+                        fireproximityprompt(proximityPrompt)
                     end
                     time += 0.1
                     wait(0.1)
@@ -286,7 +283,15 @@ end)
 --#region Settings
 local SettingsSection = SettingsPage:Section("Settings")
 
-DisableTreasureCollision = SettingsSection:Toggle("Disable Treasure Collision", false, "Disable Treasure Collision", function(t)
+antiAFK = SettingsSection:Button("Anti AFK", function()
+    player.Idled:Connect(function()
+        VU:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        wait(1)
+        VU:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end)
+end)
+
+SettingsSection:Toggle("Disable Treasure Collision", false, "Disable Treasure Collision", function(t)
     if(t == true) then
         treasureHuntClient.Treasure.CanCollide = false
         treasureHuntClient.XP.CanCollide = false
