@@ -218,9 +218,9 @@ function autoTrade()
             [2] = game:GetService("Players")[target]
         }
         player.Remotes.TradeRequestRemote:FireServer(unpack(args))
-    
+
         while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
-    
+
         for i = 1, 9 do
             local args = {
                 [1] = "AddTradeItem",
@@ -233,13 +233,57 @@ function autoTrade()
             }
             game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
         end
-    
+
         local args = {
             [1] = "AcceptTrade"
         }
-    
+
         game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
-    
+
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
+    end
+end
+TradeSection:Toggle("Auto Trade Missing", false, "Auto Trade", function(t)
+    if(t == true) then
+        AutoTradeBool = true
+        autoTradeMissing()
+    else
+        AutoTradeBool = false
+    end
+end)
+function autoTradeMissing()
+    while AutoTradeBool == true do
+        local Accessories = player.Data.Characters[slot].Accessories
+        local MissingAccessories = getMissingAccessories(getUniqueAccessories(target, "Slot1"), getUniqueAccessories(player.Name, slot))
+        print_table(MissingAccessories)
+        local args = {
+            [1] = "SendRequest",
+            [2] = game:GetService("Players")[target]
+        }
+        player.Remotes.TradeRequestRemote:FireServer(unpack(args))
+
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
+
+        for i = 1, 9 do
+            print(getAccessorieByName(Accessories, MissingAccessories[i]))
+            local args = {
+                [1] = "AddTradeItem",
+                [2] = {
+                    ["Amount"] = 1,
+                    ["Name"] = getAccessorieByName(Accessories, MissingAccessories[i]).Name,
+                    ["ItemType"] = "Accessories",
+                    ["Slot"] = "Slot1"
+                }
+            }
+            game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+        end
+
+        local args = {
+            [1] = "AcceptTrade"
+        }
+
+        game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+
         while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
     end
 end
@@ -436,6 +480,7 @@ end)
 
 --#endregion
 
+--#region Functions
 function SplitByCase(string)
     local words = {}
     local word = ""
@@ -583,3 +628,119 @@ function logItem(Item)
         })
     })
 end
+
+function getUniqueAccessories(user, checkSlot)
+    local values = {}
+    local uniqueValues = {}
+
+    local accessories = game:GetService("Players")[user].Data.Characters[checkSlot].Accessories:GetChildren()
+    for i, accessory in ipairs(accessories) do
+        table.insert(values, accessory.Value)
+    end
+
+    for i, value in ipairs(values) do
+        if not uniqueValues[value] then
+            uniqueValues[value] = true
+        end
+    end
+
+    return uniqueValues
+end
+
+function getMissingAccessories(targetaccs, youraccs)
+    local missing = {}
+    for i, v in pairs(youraccs) do
+        if(targetaccs[i] == nil) then
+            table.insert(missing, i)
+        end
+    end
+    return missing
+end
+
+function getAccessorieByName(accessories, name)
+    for i, v in ipairs(accessories:GetChildren()) do
+        if(v.Value == name) then
+            return v
+        end
+    end
+end
+
+function print_table(node)
+    local cache, stack, output = {},{},{}
+    local depth = 1
+    local output_str = "{\n"
+
+    while true do
+        local size = 0
+        for k,v in pairs(node) do
+            size = size + 1
+        end
+
+        local cur_index = 1
+        for k,v in pairs(node) do
+            if (cache[node] == nil) or (cur_index >= cache[node]) then
+
+                if (string.find(output_str,"}",output_str:len())) then
+                    output_str = output_str .. ",\n"
+                elseif not (string.find(output_str,"\n",output_str:len())) then
+                    output_str = output_str .. "\n"
+                end
+
+                -- This is necessary for working with HUGE tables otherwise we run out of memory using concat on huge strings
+                table.insert(output,output_str)
+                output_str = ""
+
+                local key
+                if (type(k) == "number" or type(k) == "boolean") then
+                    key = "["..tostring(k).."]"
+                else
+                    key = "['"..tostring(k).."']"
+                end
+
+                if (type(v) == "number" or type(v) == "boolean") then
+                    output_str = output_str .. string.rep('\t',depth) .. key .. " = "..tostring(v)
+                elseif (type(v) == "table") then
+                    output_str = output_str .. string.rep('\t',depth) .. key .. " = {\n"
+                    table.insert(stack,node)
+                    table.insert(stack,v)
+                    cache[node] = cur_index+1
+                    break
+                else
+                    output_str = output_str .. string.rep('\t',depth) .. key .. " = '"..tostring(v).."'"
+                end
+
+                if (cur_index == size) then
+                    output_str = output_str .. "\n" .. string.rep('\t',depth-1) .. "}"
+                else
+                    output_str = output_str .. ","
+                end
+            else
+                -- close the table
+                if (cur_index == size) then
+                    output_str = output_str .. "\n" .. string.rep('\t',depth-1) .. "}"
+                end
+            end
+
+            cur_index = cur_index + 1
+        end
+
+        if (size == 0) then
+            output_str = output_str .. "\n" .. string.rep('\t',depth-1) .. "}"
+        end
+
+        if (#stack > 0) then
+            node = stack[#stack]
+            stack[#stack] = nil
+            depth = cache[node] == nil and depth + 1 or depth - 1
+        else
+            break
+        end
+    end
+
+    -- This is necessary for working with HUGE tables otherwise we run out of memory using concat on huge strings
+    table.insert(output,output_str)
+    output_str = table.concat(output)
+
+    print(output_str)
+end
+--#endregion
