@@ -3,9 +3,12 @@ local player = game.Players.LocalPlayer
 local players = game:GetService("Players")
 local VU = game:GetService("VirtualUser")
 local http = game:GetService("HttpService")
-local RewardsClient = require(game:GetService("ReplicatedStorage")["_replicationFolder"].RewardsClient);
-local LevelUpClient = require(game:GetService("ReplicatedStorage")["_replicationFolder"].LevelUpClient);
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Storage = ReplicatedStorage.Storage;
+local RewardsClient = require(ReplicatedStorage["_replicationFolder"].RewardsClient);
+local LevelUpClient = require(ReplicatedStorage["_replicationFolder"].LevelUpClient);
 local treasureHuntClient = game:GetService("ReplicatedStorage")["_replicationFolder"].TreasureHuntClient;
+local gameUtils = require(game:GetService("ReplicatedStorage")["_replicationFolder"].GameUtils)
 local treasureHuntMinigame = game:GetService("Workspace").Interactions.Minigames.TreasureHunt;
 local win = SolarisLib:New({
     Name = "Griffins Destiny",
@@ -135,7 +138,7 @@ AutoFarmSection:Toggle("Auto Open Eggs", false, "Auto Open Eggs", function(t)
                 [1] = player.Data.Characters["Slot"..i].Eggs:GetChildren()[1].Name,
                 [2] = "Eggs"
             }
-            game:GetService("ReplicatedStorage").Remotes.EquipPetRemote:InvokeServer(unpack(args))
+            ReplicatedStorage.Remotes.EquipPetRemote:InvokeServer(unpack(args))
         end
     end
 end)
@@ -149,7 +152,7 @@ function EggAddedOrRemoved(slot)
         [2] = "Eggs"
     }
     print("Equipped Egg: "..args[1])
-    game:GetService("ReplicatedStorage").Remotes.EquipPetRemote:InvokeServer(unpack(args))
+    ReplicatedStorage.Remotes.EquipPetRemote:InvokeServer(unpack(args))
 end
 for i = 1, 3 do
     player.Data.Characters["Slot"..i].Eggs.ChildAdded:Connect(function() EggAddedOrRemoved("Slot"..i) end)
@@ -231,14 +234,14 @@ function autoTrade()
                     ["Slot"] = "Slot1"
                 }
             }
-            game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+            ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
         end
 
         local args = {
             [1] = "AcceptTrade"
         }
 
-        game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+        ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
 
         while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
     end
@@ -255,7 +258,6 @@ function autoTradeMissing()
     while AutoTradeBool == true do
         local Accessories = player.Data.Characters[slot].Accessories
         local MissingAccessories = getMissingAccessories(getUniqueAccessories(target, "Slot1"), getUniqueAccessories(player.Name, slot))
-        print_table(MissingAccessories)
         local args = {
             [1] = "SendRequest",
             [2] = game:GetService("Players")[target]
@@ -265,7 +267,6 @@ function autoTradeMissing()
         while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
 
         for i = 1, 9 do
-            print(getAccessorieByName(Accessories, MissingAccessories[i]))
             local args = {
                 [1] = "AddTradeItem",
                 [2] = {
@@ -275,14 +276,14 @@ function autoTradeMissing()
                     ["Slot"] = "Slot1"
                 }
             }
-            game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+            ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
         end
 
         local args = {
             [1] = "AcceptTrade"
         }
 
-        game:GetService("ReplicatedStorage").Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+        ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
 
         while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
     end
@@ -309,7 +310,7 @@ function autoAccept()
             [1] = "AcceptTrade"
         }
         coroutine.wrap(function()
-            game:GetService("ReplicatedStorage").Remotes:FindFirstChild(target.."-"..player.Name.."TradeRemote"):InvokeServer(unpack(args2))
+            ReplicatedStorage.Remotes:FindFirstChild(target.."-"..player.Name.."TradeRemote"):InvokeServer(unpack(args2))
         end)()
         print("Accepted trade with " .. target)
         wait(delay2)
@@ -374,38 +375,19 @@ end)
 
 --#region Crates
 local CratesSection = CratesPage:Section("Crates")
-CrateSelector = CratesSection:Dropdown("Dropdown",
-{
-    "FurCrate",
-    "HairCrate",
-    "BasicCrate",
-    "HornCrate",
-    "FeatherCrate",
-    "PunkCrate",
-    "JeweleryCrate",
-    "NatureCrate",
-    "ClothingCrate",
-    "PatternCrate",
-    "BattleCrate",
-    "CuteCrate",
-    "AquaticCrate",
-    "DragonCrate",
-    "PartyCrate",
-    "MagicCrate",
-    "DinosaurCrate",
-    "FireCrate",
-    "DarkCrate",
-    "GalaxyCrate",
-    "LightCrate",
-    "HorrorCrate",
-    "RoyalCrate",
-    "HaloCrate",
-    "TropicalCrate"
-}
-,"","Dropdown", function(t)
+local CrateSelector = CratesSection:Dropdown("Dropdown", {},"","Dropdown", function(t)
     Crate = t
 end)
-
+function GetCrates()
+    local Crates = {}
+    for _, Crate in ipairs(Storage.Assets.Items.Crates:GetChildren()) do
+        table.insert(Crates, Crate.Name)
+    end
+    --sort table alphabetically
+    table.sort(Crates)
+    return Crates
+end
+CrateSelector:Refresh(GetCrates(), true)
 CrateAmountSelector = CratesSection:Slider("Amount", 1,12,1,1,"Slider", function(t)
     CrateAmount = t
 end)
@@ -442,7 +424,7 @@ function openUntilGotItems()
         [2] = CrateAmount
     }
     while OpenUntilGotItemsBool == true do
-        local drops = game:GetService("ReplicatedStorage").Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
+        local drops = ReplicatedStorage.Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
         if(#itmsNeeded < 0) then
             OpenUntilGotItemsBool = false
             return
@@ -468,7 +450,7 @@ OpenCrates = CratesSection:Button("Open Crates", function()
         [2] = CrateAmount
     }
 
-    local drops = game:GetService("ReplicatedStorage").Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
+    local drops = ReplicatedStorage.Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
     if(LogCratesBool) then
         for i, v in pairs(drops) do
             for i2, v2 in pairs(v) do
@@ -527,6 +509,11 @@ function LogCrateReward(reward)
         msg = "Legendary Item Opened!"
         url = getgenv().legendaryURL
     end
+    print_table(gameUtils.GetItemFromName(reward.Item))
+    local image = syn.request({
+        Url = "https://thumbnails.roblox.com/v1/assets?assetIds=" + gameUtils.GetItemFromName(reward.Item).Image + "&returnPolicy=PlaceHolder&size=420x420&format=Png&isCircular=false";
+        Method = "GET"
+    })
     local response = syn.request({
         Url = url,
         Method = "POST",
@@ -556,6 +543,9 @@ function LogCrateReward(reward)
                             name = "Item Rarity",
                             value = rarity
                         }
+                    },
+                    image = {
+                        url = image
                     }
                 }
             }
