@@ -510,10 +510,6 @@ function LogCrateReward(reward)
         url = getgenv().legendaryURL
     end
     print_table(gameUtils.GetItemFromName(reward.Item))
-    local image = syn.request({
-        Url = string.format("https://thumbnails.roblox.com/v1/assets?assetIds=%s&returnPolicy=PlaceHolder&size=420x420&format=Png&isCircular=false", gameUtils.GetItemFromName(reward.Item).Image),
-        Method = "GET"
-    })
     local response = syn.request({
         Url = url,
         Method = "POST",
@@ -543,9 +539,6 @@ function LogCrateReward(reward)
                             name = "Item Rarity",
                             value = rarity
                         }
-                    },
-                    image = {
-                        url = image
                     }
                 }
             }
