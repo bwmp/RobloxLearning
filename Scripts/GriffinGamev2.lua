@@ -6,13 +6,13 @@ local VU = game:GetService("VirtualUser")
 local http = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Storage = ReplicatedStorage.Storage;
-local RedeemCodeRemote = ReplicatedStorage.Remotes.RedeemCodeRemote
+local RedeemCode = ReplicatedStorage.Remotes.RedeemCodeRemote
 local RewardsClient = require(ReplicatedStorage["_replicationFolder"].RewardsClient);
 local LevelUpClient = require(ReplicatedStorage["_replicationFolder"].LevelUpClient);
 local treasureHuntClient = game:GetService("ReplicatedStorage")["_replicationFolder"].TreasureHuntClient;
 local gameUtils = require(game:GetService("ReplicatedStorage")["_replicationFolder"].GameUtils)
 local treasureHuntMinigame = game:GetService("Workspace").Interactions.Minigames.TreasureHunt;
-local codesToClaim = {"30klikes", "40klikes", "50klikes", "60klikes", "happychinesenewyear", "HappyValentines"}
+local codesToClaim = {"30klikes", "40klikes", "50klikes", "60klikes"}
 local win = SolarisLib:New({
     Name = "Griffins Destiny",
     FolderToSave = "GriffinsDestiny"
@@ -174,14 +174,13 @@ AutoFarmSection:Toggle("Claim Codes", false, "Claim Codes", function(t)
 end)
 function claimCodes()
     for _, code in pairs(codesToClaim) do
-        RedeemCodeRemote:InvokeServer(code)
-        wait(1)
+        RedeemCode:InvokeServer(code)
     end
 end
 function autoClaimCodes()
     while ClaimCodesBool do
         UsedCodes:ClearAllChildren()
-        wait(1)
+        while (#UsedCodes:GetChildren() > 0) do task.wait(0.1) end
         claimCodes()
     end
 end
