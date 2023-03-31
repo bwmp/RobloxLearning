@@ -78,7 +78,8 @@ function autoDig()
                 player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame + Vector3.new(0, 5, 0)
                 wait(0.5)
                 local proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
-                fireproximityprompt(proximityPrompt)
+                proximityPrompt:InputHoldBegin()
+                proximityPrompt:InputHoldEnd()
                 while (#treasureModel:GetChildren() > 0) do
                     if(time > 10)then
                         time = 0;
@@ -89,7 +90,9 @@ function autoDig()
                         end
                         stuck += 1
                         wait(1.5)
-                        fireproximityprompt(proximityPrompt)
+                        proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
+                        proximityPrompt:InputHoldBegin()
+                        proximityPrompt:InputHoldEnd()
                     end
                     time += 0.1
                     wait(0.1)
