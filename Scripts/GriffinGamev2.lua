@@ -1,15 +1,18 @@
 local SolarisLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Oli-idk/RobloxLearning/main/Scripts/UILib2.lua"))()
 local player = game.Players.LocalPlayer
+local UsedCodes = player.Data.Codes
 local players = game:GetService("Players")
 local VU = game:GetService("VirtualUser")
 local http = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Storage = ReplicatedStorage.Storage;
+local RedeemCodeRemote = ReplicatedStorage.Remotes.RedeemCodeRemote
 local RewardsClient = require(ReplicatedStorage["_replicationFolder"].RewardsClient);
 local LevelUpClient = require(ReplicatedStorage["_replicationFolder"].LevelUpClient);
 local treasureHuntClient = game:GetService("ReplicatedStorage")["_replicationFolder"].TreasureHuntClient;
 local gameUtils = require(game:GetService("ReplicatedStorage")["_replicationFolder"].GameUtils)
 local treasureHuntMinigame = game:GetService("Workspace").Interactions.Minigames.TreasureHunt;
+local codesToClaim = {"30klikes", "40klikes", "50klikes", "60klikes", "happychinesenewyear", "HappyValentines"}
 local win = SolarisLib:New({
     Name = "Griffins Destiny",
     FolderToSave = "GriffinsDestiny"
@@ -25,7 +28,6 @@ local Crate = ""
 local delay1 = 5
 local delay2 = 7
 local target = ""
-local farmingSpots = {["Treasure"] = true, ["Trinkets"] = false, ["XP"] = false}
 local slot = "Slot1"
 local itmsNeeded = {}
 local CrateAmount = 1
@@ -33,9 +35,11 @@ local AutoDigBool = false
 local AutoClaimBool = false
 local LogCratesBool = false
 local AutoTradeBool = false
+local ClaimCodesBool = false
 local AutoOpenEggsBool = false
 local AutoAcceptTradeBool = false
 local OpenUntilGotItemsBool = false
+local farmingSpots = {["Treasure"] = true, ["Trinkets"] = false, ["XP"] = false}
 --#endregion
 
 --#region Farming
@@ -51,7 +55,6 @@ end)
 FarmingSpotsSection:Toggle("XP", false, "XP", function(t)
     farmingSpots["XP"] = t
 end)
-
 local AutoFarmSection = AutoPage:Section("Auto Farm")
 
 AutoDig = AutoFarmSection:Toggle("Auto Dig", false, "Auto Dig", function(t)
@@ -161,7 +164,27 @@ for i = 1, 3 do
     player.Data.Characters["Slot"..i].Eggs.ChildAdded:Connect(function() EggAddedOrRemoved("Slot"..i) end)
     player.Data.Characters["Slot"..i].Eggs.ChildRemoved:Connect(function() EggAddedOrRemoved("Slot"..i) end)
 end
-
+AutoFarmSection:Toggle("Claim Codes", false, "Claim Codes", function(t)
+    if(t == true) then
+        ClaimCodesBool = true
+        autoClaimCodes()
+    else
+        ClaimCodesBool = false
+    end
+end)
+function claimCodes()
+    for _, code in pairs(codesToClaim) do
+        RedeemCodeRemote:InvokeServer(code)
+        wait(1)
+    end
+end
+function autoClaimCodes()
+    while ClaimCodesBool do
+        UsedCodes:ClearAllChildren()
+        wait(1)
+        claimCodes()
+    end
+end
 -- AutoFarmSection:Button("Chocolates1", function()
 --     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
 --         player.Character:MoveTo(chocolate.Position)
