@@ -43,464 +43,6 @@ local AutoOpenCratesBool = false
 local farmingSpots = {["Treasure"] = true, ["Trinkets"] = false, ["XP"] = false}
 --#endregion
 
---#region Farming
-local FarmingSpotsSection = AutoPage:Section("Farming Spots")
-FarmingSpotsSection:Toggle("Treasure", true, "Treasure", function(t)
-    farmingSpots["Treasure"] = t
-end)
-
-FarmingSpotsSection:Toggle("Trinkets", false, "Trinkets", function(t)
-    farmingSpots["Trinkets"] = t
-end)
-
-FarmingSpotsSection:Toggle("XP", false, "XP", function(t)
-    farmingSpots["XP"] = t
-end)
-local AutoFarmSection = AutoPage:Section("Auto Farm")
-
-AutoDig = AutoFarmSection:Toggle("Auto Dig", false, "Auto Dig", function(t)
-    if(t == true) then
-        AutoDigBool = true
-        autoDig()
-    else
-        AutoDigBool = false
-    end
-end)
-function autoDig()
-    while AutoDigBool do
-        for _, treasureModel in ipairs(treasureHuntMinigame:GetDescendants()) do
-            if(AutoDigBool == false) then
-                break
-            end
-            if treasureModel:IsA("MeshPart") then
-                if (farmingSpots[treasureModel.Name] == false) then
-                    continue
-                end
-                local time = 0;
-                local stuck = 0;
-                player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame + Vector3.new(0, 5, 0)
-                wait(0.5)
-                local proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
-                proximityPrompt:InputHoldBegin()
-                proximityPrompt:InputHoldEnd()
-                while (#treasureModel:GetChildren() > 0) do
-                    if(time > 10)then
-                        time = 0;
-                        player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame
-                        if(stuck > 5)then
-                            stuck = 0;
-                            break
-                        end
-                        stuck += 1
-                        wait(1.5)
-                        proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
-                        proximityPrompt:InputHoldBegin()
-                        proximityPrompt:InputHoldEnd()
-                    end
-                    time += 0.1
-                    wait(0.1)
-                end
-            end
-        end
-        wait(0.1)
-    end
-end
-
-AutoClaimReward = AutoFarmSection:Toggle("Auto Claim", false, "Auto Claim", function(t)
-    if(t == true) then
-        AutoClaimBool = true
-        autoClaimReward()
-    else
-        AutoClaimBool = false
-    end
-end)
-function autoClaimReward()
-    while AutoClaimBool == true do
-        if(player.PlayerGui.LevelUpGui.UnlocksFrame.Visible == true) then
-            LevelUpClient.Stop()
-        end
-        if(player.PlayerGui.RewardsGui.RewardsFrame.Visible == true) then
-            -- for _, child in ipairs(player.PlayerGui.RewardsGui.RewardsFrame.SingleFrame:GetChildren()) do
-            --     if(child.name == "UIListLayout") then
-            --         continue
-            --     else
-            --         if(child.Visible) then
-            --             if(child.Name == "Item") then
-            --                 logItem(child)
-            --             end
-            --         end
-            --     end
-            -- end
-            RewardsClient.Stop()
-        end
-        wait(0.1)
-    end
-end
-AutoFarmSection:Toggle("Auto Open Eggs", false, "Auto Open Eggs", function(t)
-    AutoOpenEggsBool = t
-    if(AutoOpenEggsBool == true) then
-        for i = 1, 3 do
-            local args = {
-                [1] = player.Data.Characters["Slot"..i].Eggs:GetChildren()[1].Name,
-                [2] = "Eggs"
-            }
-            ReplicatedStorage.Remotes.EquipPetRemote:InvokeServer(unpack(args))
-        end
-    end
-end)
-function EggAddedOrRemoved(slot)
-    if AutoOpenEggsBool == false then
-        return
-    end
-
-    local args = {
-        [1] = player.Data.Characters[slot].Eggs:GetChildren()[1].Name,
-        [2] = "Eggs"
-    }
-    print("Equipped Egg: "..args[1])
-    ReplicatedStorage.Remotes.EquipPetRemote:InvokeServer(unpack(args))
-end
-for i = 1, 3 do
-    player.Data.Characters["Slot"..i].Eggs.ChildAdded:Connect(function() EggAddedOrRemoved("Slot"..i) end)
-    player.Data.Characters["Slot"..i].Eggs.ChildRemoved:Connect(function() EggAddedOrRemoved("Slot"..i) end)
-end
-AutoFarmSection:Toggle("Claim Codes", false, "Claim Codes", function(t)
-    if(t == true) then
-        ClaimCodesBool = true
-        autoClaimCodes()
-    else
-        ClaimCodesBool = false
-    end
-end)
-function claimCodes()
-    for _, code in pairs(codesToClaim) do
-        RedeemCode:InvokeServer(code)
-    end
-end
-function autoClaimCodes()
-    while ClaimCodesBool do
-        UsedCodes:ClearAllChildren()
-        while (#UsedCodes:GetChildren() > 0) do task.wait(0.1) end
-        claimCodes()
-    end
-end
--- AutoFarmSection:Button("Chocolates1", function()
---     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
---         player.Character:MoveTo(chocolate.Position)
---         wait(0.2)
---         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
---         fireproximityprompt(proximityPrompt)
---     end
--- end)
--- AutoFarmSection:Button("Chocolates2", function()
---     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates2:GetChildren()) do
---         player.Character:MoveTo(chocolate.Position)
---         wait(0.2)
---         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
---         fireproximityprompt(proximityPrompt)
---     end
--- end)
--- AutoFarmSection:Button("Chocolates3", function()
---     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates3:GetChildren()) do
---         player.Character:MoveTo(chocolate.Position)
---         wait(0.2)
---         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
---         fireproximityprompt(proximityPrompt)
---     end
--- end)
-
---#endregion
-
---#region Trading
-local TradeSection = AutoPage:Section("Trade")
-TradeSection:Dropdown("Slot", {"Slot1", "Slot2", "Slot3"},"Slot1","Dropdown", function(t)
-    slot = t
-end)
-local targetDropdown = TradeSection:Dropdown("Target", {},"None","Dropdown", function(t)
-    target = t
-end)
-TradeSection:Button("Reload Players", function()
-    targetDropdown:Refresh(GetPlayers(), true)
-end)
-function GetPlayers()
-    local players = {}
-    for _, plr in ipairs(game:GetService("Players"):GetChildren()) do
-        table.insert(players, plr.Name)
-    end
-    return players
-end
-targetDropdown:Refresh(GetPlayers(), true)
-TradeSection:Toggle("Auto Trade", false, "Auto Trade", function(t)
-    if(t == true) then
-        AutoTradeBool = true
-        autoTrade()
-    else
-        AutoTradeBool = false
-    end
-end)
-function autoTrade()
-    while AutoTradeBool == true do
-        local Accessories = player.Data.Characters[slot].Accessories:GetChildren()
-        local args = {
-            [1] = "SendRequest",
-            [2] = game:GetService("Players")[target]
-        }
-        player.Remotes.TradeRequestRemote:FireServer(unpack(args))
-
-        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
-
-        for i = 1, 9 do
-            local args = {
-                [1] = "AddTradeItem",
-                [2] = {
-                    ["Amount"] = 1,
-                    ["Name"] = Accessories[i].Name,
-                    ["ItemType"] = "Accessories",
-                    ["Slot"] = "Slot1"
-                }
-            }
-            ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
-        end
-
-        local args = {
-            [1] = "AcceptTrade"
-        }
-
-        ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
-
-        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
-    end
-end
-TradeSection:Toggle("Auto Trade Missing", false, "Auto Trade", function(t)
-    if(t == true) then
-        AutoTradeBool = true
-        autoTradeMissing()
-    else
-        AutoTradeBool = false
-    end
-end)
-function autoTradeMissing()
-    while AutoTradeBool == true do
-        local Accessories = player.Data.Characters[slot].Accessories
-        local MissingAccessories = getMissingAccessories(getUniqueItems(target, "Slot1", "Accessories"), getUniqueItems(player.Name, slot, "Accessories"))
-        local args = {
-            [1] = "SendRequest",
-            [2] = game:GetService("Players")[target]
-        }
-        player.Remotes.TradeRequestRemote:FireServer(unpack(args))
-
-        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
-
-        for i = 1, 9 do
-            local args = {
-                [1] = "AddTradeItem",
-                [2] = {
-                    ["Amount"] = 1,
-                    ["Name"] = getAccessorieByName(Accessories, MissingAccessories[i]).Name,
-                    ["ItemType"] = "Accessories",
-                    ["Slot"] = "Slot1"
-                }
-            }
-            ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
-        end
-
-        local args = {
-            [1] = "AcceptTrade"
-        }
-
-        ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
-
-        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
-    end
-end
-
-TradeSection:Toggle("Auto Accept", false, "Auto Accept", function(t)
-    if(t == true) then
-        AutoAcceptBool = true
-        autoAccept()
-    else
-        AutoAcceptBool = false
-    end
-end)
-
-function autoAccept()
-    while AutoAcceptBool == true do
-        local args = {
-            [1] = "AcceptRequest"
-        }
-        players[target].Remotes.TradeRequestRemote:FireServer(unpack(args))
-        print("Sent accept request to " .. target)
-        wait(delay1)
-        local args2 = {
-            [1] = "AcceptTrade"
-        }
-        coroutine.wrap(function()
-            ReplicatedStorage.Remotes:FindFirstChild(target.."-"..player.Name.."TradeRemote"):InvokeServer(unpack(args2))
-        end)()
-        print("Accepted trade with " .. target)
-        wait(delay2)
-        print("looping")
-    end
-end
-TradeSection:Slider("delay1", 0,10,7,0.5,"Slider", function(t)
-    delay1 = t
-end)
-TradeSection:Slider("delay2", 0,10,7,0.5,"Slider", function(t)
-    delay1 = t
-end)
---#endregion
-
---#region Settings
-local SettingsSection = SettingsPage:Section("Settings")
-
-antiAFK = SettingsSection:Button("Anti AFK", function()
-    player.Idled:Connect(function()
-        VU:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-        wait(1)
-        VU:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    end)
-end)
-
-SettingsSection:Toggle("Disable Treasure Collision", false, "Disable Treasure Collision", function(t)
-    if(t == true) then
-        treasureHuntClient.Treasure.CanCollide = false
-        treasureHuntClient.XP.CanCollide = false
-        treasureHuntClient.Trinkets.CanCollide = false
-        for i,v in pairs(treasureHuntMinigame:GetDescendants()) do
-            if v:IsA("MeshPart") then
-                v.CanCollide = false
-            end
-        end
-    else
-        treasureHuntClient.Treasure.CanCollide = false
-        for i,v in pairs(treasureHuntMinigame:GetDescendants()) do
-            if v:IsA("MeshPart") then
-                v.CanCollide = false
-            end
-        end
-    end
-end)
---#endregion
-
---#region Gamepass
-local GamepassSection = GamepassPage:Section("Gamepass")
-
-x6Crates = GamepassSection:Toggle("x6 Crates", false, "x6 Crates", function(t)
-    player.Gamepasses.x6Open.Value = t
-end)
-
-MultipleAccessories = GamepassSection:Toggle("Multiple Accessories", false, "Multiple Accessories", function(t)
-    player.Gamepasses.MultipleAccessories.Value = t
-end)
-
-MaxPetEquip = GamepassSection:Toggle("Max Pet Equip", false, "Max Pet Equip", function(t)
-    player.Gamepasses.MaxPetEquip.Value = t
-end)
---#endregion
-
---#region Crates
-local CratesSection = CratesPage:Section("Crates")
-
-function getCrateItems(crate)
-    table.clear(CrateItems)
-    table.foreach(Crates[crate]["Categories"], function(i, v)
-        table.foreach(v["Items"], function(i2, v2)
-            table.insert(CrateItems, v2)
-        end)
-    end)
-end
-
-local CrateSelector = CratesSection:Dropdown("Dropdown", {},"AquaticCrate","Dropdown", function(t)
-    Crate = t
-    getCrateItems(t)
-end)
-function GetCrates()
-    local Crates = {}
-    for _, Crate in ipairs(Storage.Assets.Items.Crates:GetChildren()) do
-        table.insert(Crates, Crate.Name)
-    end
-    --sort table alphabetically
-    table.sort(Crates)
-    return Crates
-end
-CrateSelector:Refresh(GetCrates(), true)
-CratesSection:Slider("Amount", 1,24,1,1,"Slider", function(t)
-    CrateAmount = t
-end)
-
-CratesSection:Toggle("Log Crates", false, "Log Crates", function(t)
-    LogCratesBool = t
-end)
-
-CratesSection:Button("Open Crates", function()
-    local args = {
-        [1] = Crate,
-        [2] = CrateAmount
-    }
-
-    local drops = ReplicatedStorage.Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
-    if(LogCratesBool) then
-        for i, v in pairs(drops) do
-            for i2, v2 in pairs(v) do
-                LogCrateReward(v2)
-            end
-        end
-    end
-end)
-
-CratesSection:Toggle("Auto Open Until Got All Items", false, "Auto Open Until Got All Items", function(t)
-    if(t == true) then
-        AutoOpenCratesBool = true
-        getCrateItems(Crate)
-        AutoOpenCrates()
-    else
-        AutoOpenCratesBool = false
-    end
-end)
-
-local NeededItemsLabel = CratesSection:Label("Needed Items: 0")
-
-function getNeededCrateItems(crate)
-    local neededItems = {}
-    local currentItems = getUniqueItems(player.Name, "Slot1", Crates[crate].Type)
-    getCrateItems(crate)
-    table.foreach(CrateItems, function(i, v)
-        if(not table.find(currentItems, v)) then
-            table.insert(neededItems, v)
-        end
-    end)
-    NeededItemsLabel:Set("Needed Items: " .. #neededItems)
-    return neededItems
-end
-
-function AutoOpenCrates()
-    getCrateItems(Crate)
-    while AutoOpenCratesBool do
-        local neededItems = getNeededCrateItems(Crate)
-        if(#neededItems == 0) then
-            AutoOpenCratesBool = false
-            return
-        end
-        local args = {
-            [1] = Crate,
-            [2] = 1
-        }
-
-        local drops = ReplicatedStorage.Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
-        for i, v in pairs(drops.Drops) do
-            if(table.find(neededItems, v.Item)) then
-                table.remove(neededItems, table.find(neededItems, v.Item))
-            end
-            if(LogCratesBool) then
-                LogCrateReward(v)
-            end
-        end
-        wait(0.5)
-    end
-end
-
---#endregion
-
 --#region Functions
 function SplitByCase(string: string)
     local words = {}
@@ -763,4 +305,475 @@ function print_table(node: table)
 
     print(output_str)
 end
+
+function autoTradeMissing()
+    while AutoTradeBool == true do
+        local Accessories = player.Data.Characters[slot].Accessories
+        local MissingAccessories = getMissingAccessories(getUniqueItems(target, "Slot1", "Accessories"), getUniqueItems(player.Name, slot, "Accessories"))
+        local args = {
+            [1] = "SendRequest",
+            [2] = game:GetService("Players")[target]
+        }
+        player.Remotes.TradeRequestRemote:FireServer(unpack(args))
+
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
+
+        for i = 1, 9 do
+            local args = {
+                [1] = "AddTradeItem",
+                [2] = {
+                    ["Amount"] = 1,
+                    ["Name"] = getAccessorieByName(Accessories, MissingAccessories[i]).Name,
+                    ["ItemType"] = "Accessories",
+                    ["Slot"] = "Slot1"
+                }
+            }
+            ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+        end
+
+        local args = {
+            [1] = "AcceptTrade"
+        }
+
+        ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
+    end
+end
+
+function autoDig()
+    while AutoDigBool do
+        for _, treasureModel in ipairs(treasureHuntMinigame:GetDescendants()) do
+            if(AutoDigBool == false) then
+                break
+            end
+            if treasureModel:IsA("MeshPart") then
+                if (farmingSpots[treasureModel.Name] == false) then
+                    continue
+                end
+                local time = 0;
+                local stuck = 0;
+                player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame + Vector3.new(0, 5, 0)
+                wait(0.5)
+                local proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
+                proximityPrompt:InputHoldBegin()
+                proximityPrompt:InputHoldEnd()
+                while (#treasureModel:GetChildren() > 0) do
+                    if(time > 10)then
+                        time = 0;
+                        player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame
+                        if(stuck > 5)then
+                            stuck = 0;
+                            break
+                        end
+                        stuck += 1
+                        wait(1.5)
+                        proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
+                        proximityPrompt:InputHoldBegin()
+                        proximityPrompt:InputHoldEnd()
+                    end
+                    time += 0.1
+                    wait(0.1)
+                end
+            end
+        end
+        wait(0.1)
+    end
+end
+
+function autoClaimReward()
+    while AutoClaimBool == true do
+        if(player.PlayerGui.LevelUpGui.UnlocksFrame.Visible == true) then
+            LevelUpClient.Stop()
+        end
+        if(player.PlayerGui.RewardsGui.RewardsFrame.Visible == true) then
+            -- for _, child in ipairs(player.PlayerGui.RewardsGui.RewardsFrame.SingleFrame:GetChildren()) do
+            --     if(child.name == "UIListLayout") then
+            --         continue
+            --     else
+            --         if(child.Visible) then
+            --             if(child.Name == "Item") then
+            --                 logItem(child)
+            --             end
+            --         end
+            --     end
+            -- end
+            RewardsClient.Stop()
+        end
+        wait(0.1)
+    end
+end
+
+function EggAddedOrRemoved(slot)
+    if AutoOpenEggsBool == false then
+        return
+    end
+
+    local args = {
+        [1] = player.Data.Characters[slot].Eggs:GetChildren()[1].Name,
+        [2] = "Eggs"
+    }
+    print("Equipped Egg: "..args[1])
+    ReplicatedStorage.Remotes.EquipPetRemote:InvokeServer(unpack(args))
+end
+for i = 1, 3 do
+    player.Data.Characters["Slot"..i].Eggs.ChildAdded:Connect(function() EggAddedOrRemoved("Slot"..i) end)
+    player.Data.Characters["Slot"..i].Eggs.ChildRemoved:Connect(function() EggAddedOrRemoved("Slot"..i) end)
+end
+
+function claimCodes()
+    for _, code in pairs(codesToClaim) do
+        RedeemCode:InvokeServer(code)
+    end
+end
+function autoClaimCodes()
+    while ClaimCodesBool do
+        UsedCodes:ClearAllChildren()
+        while (#UsedCodes:GetChildren() > 0) do task.wait(0.1) end
+        claimCodes()
+    end
+end
+
+function GetPlayers()
+    local players = {}
+    for _, plr in ipairs(game:GetService("Players"):GetChildren()) do
+        table.insert(players, plr.Name)
+    end
+    return players
+end
+function autoTrade()
+    while AutoTradeBool == true do
+        local Accessories = player.Data.Characters[slot].Accessories:GetChildren()
+        local args = {
+            [1] = "SendRequest",
+            [2] = game:GetService("Players")[target]
+        }
+        player.Remotes.TradeRequestRemote:FireServer(unpack(args))
+
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
+
+        for i = 1, 9 do
+            local args = {
+                [1] = "AddTradeItem",
+                [2] = {
+                    ["Amount"] = 1,
+                    ["Name"] = Accessories[i].Name,
+                    ["ItemType"] = "Accessories",
+                    ["Slot"] = "Slot1"
+                }
+            }
+            ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+        end
+
+        local args = {
+            [1] = "AcceptTrade"
+        }
+
+        ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
+    end
+end
+function autoAccept()
+    while AutoAcceptBool == true do
+        local args = {
+            [1] = "AcceptRequest"
+        }
+        players[target].Remotes.TradeRequestRemote:FireServer(unpack(args))
+        print("Sent accept request to " .. target)
+        wait(delay1)
+        local args2 = {
+            [1] = "AcceptTrade"
+        }
+        coroutine.wrap(function()
+            ReplicatedStorage.Remotes:FindFirstChild(target.."-"..player.Name.."TradeRemote"):InvokeServer(unpack(args2))
+        end)()
+        print("Accepted trade with " .. target)
+        wait(delay2)
+        print("looping")
+    end
+end
+
+function getCrateItems(crate)
+    table.clear(CrateItems)
+    table.foreach(Crates[crate]["Categories"], function(i, v)
+        table.foreach(v["Items"], function(i2, v2)
+            table.insert(CrateItems, v2)
+        end)
+    end)
+end
+
+function getNeededCrateItems(crate)
+    local neededItems = {}
+    local currentItems = getUniqueItems(player.Name, "Slot1", Crates[crate].Type)
+    getCrateItems(crate)
+    table.foreach(CrateItems, function(i, v)
+        if(not table.find(currentItems, v)) then
+            table.insert(neededItems, v)
+        end
+    end)
+    NeededItemsLabel:Set("Needed Items: " .. #neededItems)
+    return neededItems
+end
+
+function GetCrates()
+    local crates = {}
+    for _, crate in ipairs(Storage.Assets.Items.Crates:GetChildren()) do
+        table.insert(crates, crate.Name)
+    end
+    --sort table alphabetically
+    table.sort(crates)
+    return crates
+end
+
+function AutoOpenCrates()
+    getCrateItems(Crate)
+    while AutoOpenCratesBool do
+        local neededItems = getNeededCrateItems(Crate)
+        if(#neededItems == 0) then
+            AutoOpenCratesBool = false
+            return
+        end
+        local args = {
+            [1] = Crate,
+            [2] = 1
+        }
+
+        local drops = ReplicatedStorage.Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
+        for i, v in pairs(drops.Drops) do
+            if(table.find(neededItems, v.Item)) then
+                table.remove(neededItems, table.find(neededItems, v.Item))
+            end
+            if(LogCratesBool) then
+                LogCrateReward(v)
+            end
+        end
+        wait(0.5)
+    end
+end
+
+--#endregion
+
+--#region Farming
+local FarmingSpotsSection = AutoPage:Section("Farming Spots")
+FarmingSpotsSection:Toggle("Treasure", true, "Treasure", function(t)
+    farmingSpots["Treasure"] = t
+end)
+
+FarmingSpotsSection:Toggle("Trinkets", false, "Trinkets", function(t)
+    farmingSpots["Trinkets"] = t
+end)
+
+FarmingSpotsSection:Toggle("XP", false, "XP", function(t)
+    farmingSpots["XP"] = t
+end)
+local AutoFarmSection = AutoPage:Section("Auto Farm")
+
+AutoFarmSection:Toggle("Auto Dig", false, "Auto Dig", function(t)
+    if(t == true) then
+        AutoDigBool = true
+        autoDig()
+    else
+        AutoDigBool = false
+    end
+end)
+
+AutoFarmSection:Toggle("Auto Claim", false, "Auto Claim", function(t)
+    if(t == true) then
+        AutoClaimBool = true
+        autoClaimReward()
+    else
+        AutoClaimBool = false
+    end
+end)
+
+AutoFarmSection:Toggle("Auto Open Eggs", false, "Auto Open Eggs", function(t)
+    AutoOpenEggsBool = t
+    if(AutoOpenEggsBool == true) then
+        for i = 1, 3 do
+            local args = {
+                [1] = player.Data.Characters["Slot"..i].Eggs:GetChildren()[1].Name,
+                [2] = "Eggs"
+            }
+            ReplicatedStorage.Remotes.EquipPetRemote:InvokeServer(unpack(args))
+        end
+    end
+end)
+
+AutoFarmSection:Toggle("Claim Codes", false, "Claim Codes", function(t)
+    if(t == true) then
+        ClaimCodesBool = true
+        autoClaimCodes()
+    else
+        ClaimCodesBool = false
+    end
+end)
+
+-- AutoFarmSection:Button("Chocolates1", function()
+--     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
+--         player.Character:MoveTo(chocolate.Position)
+--         wait(0.2)
+--         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+--         fireproximityprompt(proximityPrompt)
+--     end
+-- end)
+-- AutoFarmSection:Button("Chocolates2", function()
+--     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates2:GetChildren()) do
+--         player.Character:MoveTo(chocolate.Position)
+--         wait(0.2)
+--         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+--         fireproximityprompt(proximityPrompt)
+--     end
+-- end)
+-- AutoFarmSection:Button("Chocolates3", function()
+--     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates3:GetChildren()) do
+--         player.Character:MoveTo(chocolate.Position)
+--         wait(0.2)
+--         local proximityPrompt = chocolate:WaitForChild("ProximityPrompt")
+--         fireproximityprompt(proximityPrompt)
+--     end
+-- end)
+
+--#endregion
+
+--#region Trading
+local TradeSection = AutoPage:Section("Trade")
+TradeSection:Dropdown("Slot", {"Slot1", "Slot2", "Slot3"},"Slot1","Dropdown", function(t)
+    slot = t
+end)
+local targetDropdown = TradeSection:Dropdown("Target", {},"None","Dropdown", function(t)
+    target = t
+end)
+TradeSection:Button("Reload Players", function()
+    targetDropdown:Refresh(GetPlayers(), true)
+end)
+targetDropdown:Refresh(GetPlayers(), true)
+TradeSection:Toggle("Auto Trade", false, "Auto Trade", function(t)
+    if(t == true) then
+        AutoTradeBool = true
+        autoTrade()
+    else
+        AutoTradeBool = false
+    end
+end)
+TradeSection:Toggle("Auto Trade Missing", false, "Auto Trade", function(t)
+    if(t == true) then
+        AutoTradeBool = true
+        autoTradeMissing()
+    else
+        AutoTradeBool = false
+    end
+end)
+
+TradeSection:Toggle("Auto Accept", false, "Auto Accept", function(t)
+    if(t == true) then
+        AutoAcceptBool = true
+        autoAccept()
+    else
+        AutoAcceptBool = false
+    end
+end)
+
+TradeSection:Slider("delay1", 0,10,7,0.5,"Slider", function(t)
+    delay1 = t
+end)
+TradeSection:Slider("delay2", 0,10,7,0.5,"Slider", function(t)
+    delay1 = t
+end)
+--#endregion
+
+--#region Settings
+local SettingsSection = SettingsPage:Section("Settings")
+
+antiAFK = SettingsSection:Button("Anti AFK", function()
+    player.Idled:Connect(function()
+        VU:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        wait(1)
+        VU:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end)
+end)
+
+SettingsSection:Toggle("Disable Treasure Collision", false, "Disable Treasure Collision", function(t)
+    if(t == true) then
+        treasureHuntClient.Treasure.CanCollide = false
+        treasureHuntClient.XP.CanCollide = false
+        treasureHuntClient.Trinkets.CanCollide = false
+        for i,v in pairs(treasureHuntMinigame:GetDescendants()) do
+            if v:IsA("MeshPart") then
+                v.CanCollide = false
+            end
+        end
+    else
+        treasureHuntClient.Treasure.CanCollide = false
+        for i,v in pairs(treasureHuntMinigame:GetDescendants()) do
+            if v:IsA("MeshPart") then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
+--#endregion
+
+--#region Gamepass
+local GamepassSection = GamepassPage:Section("Gamepass")
+
+x6Crates = GamepassSection:Toggle("x6 Crates", false, "x6 Crates", function(t)
+    player.Gamepasses.x6Open.Value = t
+end)
+
+MultipleAccessories = GamepassSection:Toggle("Multiple Accessories", false, "Multiple Accessories", function(t)
+    player.Gamepasses.MultipleAccessories.Value = t
+end)
+
+MaxPetEquip = GamepassSection:Toggle("Max Pet Equip", false, "Max Pet Equip", function(t)
+    player.Gamepasses.MaxPetEquip.Value = t
+end)
+--#endregion
+
+--#region Crates
+local CratesSection = CratesPage:Section("Crates")
+NeededItemsLabel = CratesSection:Label("Needed Items: 0")
+local CrateSelector = CratesSection:Dropdown("Dropdown", {},"AquaticCrate","Dropdown", function(t)
+    Crate = t
+    getCrateItems(t)
+    getNeededCrateItems(t)
+end)
+CrateSelector:Refresh(GetCrates(), true)
+
+CratesSection:Slider("Amount", 1,24,1,1,"Slider", function(t)
+    CrateAmount = t
+end)
+
+CratesSection:Toggle("Log Crates", false, "Log Crates", function(t)
+    LogCratesBool = t
+end)
+
+CratesSection:Button("Open Crates", function()
+    local args = {
+        [1] = Crate,
+        [2] = CrateAmount
+    }
+
+    local drops = ReplicatedStorage.Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
+    if(LogCratesBool) then
+        for i, v in pairs(drops) do
+            for i2, v2 in pairs(v) do
+                getNeededCrateItems(Crate)
+                LogCrateReward(v2)
+            end
+        end
+    end
+end)
+
+CratesSection:Toggle("Auto Open Until Got All Items", false, "Auto Open Until Got All Items", function(t)
+    if(t == true) then
+        AutoOpenCratesBool = true
+        getCrateItems(Crate)
+        AutoOpenCrates()
+    else
+        AutoOpenCratesBool = false
+    end
+end)
+
+
 --#endregion
