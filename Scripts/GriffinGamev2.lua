@@ -1,7 +1,7 @@
 local SolarisLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Oli-idk/RobloxLearning/main/Scripts/UILib2.lua"))()
-local player = game.Players.LocalPlayer
-local UsedCodes = player.Data.Codes
 local players = game:GetService("Players")
+local player = players.LocalPlayer
+local UsedCodes = player.Data.Codes
 local VU = game:GetService("VirtualUser")
 local http = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -9,8 +9,9 @@ local Storage = ReplicatedStorage.Storage;
 local RedeemCode = ReplicatedStorage.Remotes.RedeemCodeRemote
 local RewardsClient = require(ReplicatedStorage["_replicationFolder"].RewardsClient);
 local LevelUpClient = require(ReplicatedStorage["_replicationFolder"].LevelUpClient);
-local treasureHuntClient = game:GetService("ReplicatedStorage")["_replicationFolder"].TreasureHuntClient;
-local gameUtils = require(game:GetService("ReplicatedStorage")["_replicationFolder"].GameUtils)
+local gameUtils = require(ReplicatedStorage["_replicationFolder"].GameUtils)
+local Crates = require(ReplicatedStorage.Storage.Assets.Items.Crates)
+local treasureHuntClient = ReplicatedStorage["_replicationFolder"].TreasureHuntClient;
 local treasureHuntMinigame = game:GetService("Workspace").Interactions.Minigames.TreasureHunt;
 local codesToClaim = {"30klikes", "40klikes", "50klikes", "60klikes", "AprilFools"}
 local win = SolarisLib:New({
@@ -29,16 +30,16 @@ local delay1 = 5
 local delay2 = 7
 local target = ""
 local slot = "Slot1"
-local itmsNeeded = {}
+local CrateItems = {}
 local CrateAmount = 1
+local NeededItems = {}
 local AutoDigBool = false
 local AutoClaimBool = false
 local LogCratesBool = false
 local AutoTradeBool = false
 local ClaimCodesBool = false
 local AutoOpenEggsBool = false
-local AutoAcceptTradeBool = false
-local OpenUntilGotItemsBool = false
+local AutoOpenCratesBool = false
 local farmingSpots = {["Treasure"] = true, ["Trinkets"] = false, ["XP"] = false}
 --#endregion
 
@@ -72,7 +73,6 @@ function autoDig()
                 break
             end
             if treasureModel:IsA("MeshPart") then
-                print("Digging")
                 if (farmingSpots[treasureModel.Name] == false) then
                     continue
                 end
@@ -282,7 +282,7 @@ end)
 function autoTradeMissing()
     while AutoTradeBool == true do
         local Accessories = player.Data.Characters[slot].Accessories
-        local MissingAccessories = getMissingAccessories(getUniqueAccessories(target, "Slot1"), getUniqueAccessories(player.Name, slot))
+        local MissingAccessories = getMissingAccessories(getUniqueItems(target, "Slot1", "Accessories"), getUniqueItems(player.Name, slot, "Accessories"))
         local args = {
             [1] = "SendRequest",
             [2] = game:GetService("Players")[target]
@@ -400,8 +400,19 @@ end)
 
 --#region Crates
 local CratesSection = CratesPage:Section("Crates")
-local CrateSelector = CratesSection:Dropdown("Dropdown", {},"","Dropdown", function(t)
+
+function getCrateItems(crate)
+    table.clear(CrateItems)
+    table.foreach(Crates[crate]["Categories"], function(i, v)
+        table.foreach(v["Items"], function(i2, v2)
+            table.insert(CrateItems, v2)
+        end)
+    end)
+end
+
+local CrateSelector = CratesSection:Dropdown("Dropdown", {},"AquaticCrate","Dropdown", function(t)
     Crate = t
+    getCrateItems(t)
 end)
 function GetCrates()
     local Crates = {}
@@ -413,63 +424,15 @@ function GetCrates()
     return Crates
 end
 CrateSelector:Refresh(GetCrates(), true)
-CrateAmountSelector = CratesSection:Slider("Amount", 1,12,1,1,"Slider", function(t)
+CratesSection:Slider("Amount", 1,24,1,1,"Slider", function(t)
     CrateAmount = t
 end)
 
-LogCrates = CratesSection:Toggle("Log Crates", false, "Log Crates", function(t)
+CratesSection:Toggle("Log Crates", false, "Log Crates", function(t)
     LogCratesBool = t
 end)
 
-ItemsNeeded = CratesSection:Textbox("Items Needed", false, function(t)
-    itmsNeeded = getItems(t)
-    itemsNeededLable:Set("Items Needed: " .. #itmsNeeded)
-end)
-
-function getItems(str)
-    local noscapescript = string.gsub(str, "%s+", "")
-    noscapescript = string.lower(noscapescript)
-    return string.split(noscapescript, ",")
-end
-
-itemsNeededLable = CratesSection:Label("Items Needed: 0")
-
-OpenUntilGotItems = CratesSection:Toggle("Open crates until you have all items needed", false, "Open crates until you have all items needed", function(t)
-    if(t == true) then
-        OpenUntilGotItemsBool = true
-        openUntilGotItems()
-    else
-        OpenUntilGotItemsBool = false
-    end
-end)
-
-function openUntilGotItems()
-    local args = {
-        [1] = Crate,
-        [2] = CrateAmount
-    }
-    while OpenUntilGotItemsBool == true do
-        local drops = ReplicatedStorage.Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
-        if(#itmsNeeded < 0) then
-            OpenUntilGotItemsBool = false
-            return
-        end
-        for i, v in pairs(drops) do
-            for i2, v2 in pairs(v) do
-                if(table.find(itmsNeeded, v2.Item:lower()) == true) then
-                    table.remove(itmsNeeded, table.find(itmsNeeded, v2.Item:lower()))
-                    itemsNeededLable:Set("Items Needed: " .. #itmsNeeded)
-                end
-                if(LogCratesBool) then
-                    LogCrateReward(v2)
-                end
-            end
-        end
-        wait(1)
-    end
-end
-
-OpenCrates = CratesSection:Button("Open Crates", function()
+CratesSection:Button("Open Crates", function()
     local args = {
         [1] = Crate,
         [2] = CrateAmount
@@ -485,10 +448,61 @@ OpenCrates = CratesSection:Button("Open Crates", function()
     end
 end)
 
+CratesSection:Toggle("Auto Open Until Got All Items", false, "Auto Open Until Got All Items", function(t)
+    if(t == true) then
+        AutoOpenCratesBool = true
+        getCrateItems(Crate)
+        AutoOpenCrates()
+    else
+        AutoOpenCratesBool = false
+    end
+end)
+
+local NeededItemsLabel = CratesSection:Label("Needed Items: 0")
+
+function getNeededCrateItems(crate)
+    local neededItems = {}
+    local currentItems = getUniqueItems(player.Name, "Slot1", Crates[crate].Type)
+    getCrateItems(crate)
+    table.foreach(CrateItems, function(i, v)
+        if(not table.find(currentItems, v)) then
+            table.insert(neededItems, v)
+        end
+    end)
+    NeededItemsLabel:Set("Needed Items: " .. #neededItems)
+    return neededItems
+end
+
+function AutoOpenCrates()
+    getCrateItems(Crate)
+    while AutoOpenCratesBool do
+        local neededItems = getNeededCrateItems(Crate)
+        if(#neededItems == 0) then
+            AutoOpenCratesBool = false
+            return
+        end
+        local args = {
+            [1] = Crate,
+            [2] = 1
+        }
+
+        local drops = ReplicatedStorage.Remotes.PurchaseCrateRemote:InvokeServer(unpack(args))
+        for i, v in pairs(drops.Drops) do
+            if(table.find(neededItems, v.Item)) then
+                table.remove(neededItems, table.find(neededItems, v.Item))
+            end
+            if(LogCratesBool) then
+                LogCrateReward(v)
+            end
+        end
+        wait(0.5)
+    end
+end
+
 --#endregion
 
 --#region Functions
-function SplitByCase(string)
+function SplitByCase(string: string)
     local words = {}
     local word = ""
     for i = 1, #string do
@@ -508,7 +522,7 @@ function SplitByCase(string)
     return table.concat(words, " ")
 end
 
-function LogCrateReward(reward)
+function LogCrateReward(reward: table)
     local msg = ""
     local Color
     local url
@@ -534,7 +548,6 @@ function LogCrateReward(reward)
         msg = "Legendary Item Opened!"
         url = getgenv().legendaryURL
     end
-    print_table(gameUtils.GetItemFromName(reward.Item))
     local response = syn.request({
         Url = url,
         Method = "POST",
@@ -571,7 +584,7 @@ function LogCrateReward(reward)
     })
 end
 
-function logItem(Item)
+function logItem(Item: table)
     local msg = ""
     local Color
     local url
@@ -637,25 +650,24 @@ function logItem(Item)
     })
 end
 
-function getUniqueAccessories(user, checkSlot)
+function getUniqueItems(user, checkSlot, type)
     local values = {}
     local uniqueValues = {}
 
-    local accessories = game:GetService("Players")[user].Data.Characters[checkSlot].Accessories:GetChildren()
-    for i, accessory in ipairs(accessories) do
-        table.insert(values, accessory.Value)
+    local items = game:GetService("Players")[user].Data.Characters[checkSlot][type]:GetChildren()
+    for i, item in ipairs(items) do
+        table.insert(values, item.Value)
     end
 
     for i, value in ipairs(values) do
         if not uniqueValues[value] then
-            uniqueValues[value] = true
+            table.insert(uniqueValues, value)
         end
     end
-
     return uniqueValues
 end
 
-function getMissingAccessories(targetaccs, youraccs)
+function getMissingAccessories(targetaccs: string, youraccs: string)
     local missing = {}
     for i, v in pairs(youraccs) do
         if(targetaccs[i] == nil) then
@@ -665,7 +677,7 @@ function getMissingAccessories(targetaccs, youraccs)
     return missing
 end
 
-function getAccessorieByName(accessories, name)
+function getAccessorieByName(accessories: table, name: string)
     for i, v in ipairs(accessories:GetChildren()) do
         if(v.Value == name) then
             return v
@@ -673,7 +685,7 @@ function getAccessorieByName(accessories, name)
     end
 end
 
-function print_table(node)
+function print_table(node: table)
     local cache, stack, output = {},{},{}
     local depth = 1
     local output_str = "{\n"
