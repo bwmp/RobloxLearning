@@ -26,13 +26,11 @@ local CratesPage = win:Tab("Crates")
 
 --#region Settings
 local Crate = ""
-local delay1 = 5
-local delay2 = 7
 local target = ""
 local slot = "Slot1"
+local itemType = "Accessories"
 local CrateItems = {}
 local CrateAmount = 1
-local NeededItems = {}
 local AutoDigBool = false
 local AutoClaimBool = false
 local LogCratesBool = false
@@ -195,7 +193,6 @@ end
 function getUniqueItems(user, checkSlot, type)
     local values = {}
     local uniqueValues = {}
-
     local items = game:GetService("Players")[user].Data.Characters[checkSlot][type]:GetChildren()
     for i, item in ipairs(items) do
         table.insert(values, item.Value)
@@ -209,7 +206,23 @@ function getUniqueItems(user, checkSlot, type)
     return uniqueValues
 end
 
-function getMissingAccessories(targetaccs: string, youraccs: string)
+function getUniqueItems2(user, checkSlot, type)
+    local values = {}
+    local uniqueValues = {}
+    local items = game:GetService("Players")[user].Data.Characters[checkSlot][type]:GetChildren()
+    for i, item in ipairs(items) do
+        table.insert(values, item.Value)
+    end
+
+    for i, value in ipairs(values) do
+        if not uniqueValues[value] then
+            uniqueValues[value] = true
+        end
+    end
+    return uniqueValues
+end
+
+function getMissing(targetaccs: string, youraccs: string)
     local missing = {}
     for i, v in pairs(youraccs) do
         if(targetaccs[i] == nil) then
@@ -219,8 +232,8 @@ function getMissingAccessories(targetaccs: string, youraccs: string)
     return missing
 end
 
-function getAccessorieByName(accessories: table, name: string)
-    for i, v in ipairs(accessories:GetChildren()) do
+function getItemByName(items: table, name: string)
+    for i, v in ipairs(items:GetChildren()) do
         if(v.Value == name) then
             return v
         end
@@ -306,41 +319,6 @@ function print_table(node: table)
     print(output_str)
 end
 
-function autoTradeMissing()
-    while AutoTradeBool == true do
-        local Accessories = player.Data.Characters[slot].Accessories
-        local MissingAccessories = getMissingAccessories(getUniqueItems(target, "Slot1", "Accessories"), getUniqueItems(player.Name, slot, "Accessories"))
-        local args = {
-            [1] = "SendRequest",
-            [2] = game:GetService("Players")[target]
-        }
-        player.Remotes.TradeRequestRemote:FireServer(unpack(args))
-
-        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
-
-        for i = 1, 9 do
-            local args = {
-                [1] = "AddTradeItem",
-                [2] = {
-                    ["Amount"] = 1,
-                    ["Name"] = getAccessorieByName(Accessories, MissingAccessories[i]).Name,
-                    ["ItemType"] = "Accessories",
-                    ["Slot"] = "Slot1"
-                }
-            }
-            ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
-        end
-
-        local args = {
-            [1] = "AcceptTrade"
-        }
-
-        ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
-
-        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
-    end
-end
-
 function autoDig()
     while AutoDigBool do
         for _, treasureModel in ipairs(treasureHuntMinigame:GetDescendants()) do
@@ -354,7 +332,7 @@ function autoDig()
                 local time = 0;
                 local stuck = 0;
                 player.Character.HumanoidRootPart.CFrame = treasureModel.CFrame + Vector3.new(0, 5, 0)
-                wait(0.5)
+                task.wait(0.5)
                 local proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
                 proximityPrompt:InputHoldBegin()
                 proximityPrompt:InputHoldEnd()
@@ -367,17 +345,17 @@ function autoDig()
                             break
                         end
                         stuck += 1
-                        wait(1.5)
+                        task.wait(1.5)
                         proximityPrompt = treasureModel:WaitForChild("ProximityPrompt")
                         proximityPrompt:InputHoldBegin()
                         proximityPrompt:InputHoldEnd()
                     end
                     time += 0.1
-                    wait(0.1)
+                    task.wait(0.1)
                 end
             end
         end
-        wait(0.1)
+        task.wait(0.1)
     end
 end
 
@@ -400,7 +378,7 @@ function autoClaimReward()
             -- end
             RewardsClient.Stop()
         end
-        wait(0.1)
+        task.wait(0.1)
     end
 end
 
@@ -413,7 +391,6 @@ function EggAddedOrRemoved(slot)
         [1] = player.Data.Characters[slot].Eggs:GetChildren()[1].Name,
         [2] = "Eggs"
     }
-    print("Equipped Egg: "..args[1])
     ReplicatedStorage.Remotes.EquipPetRemote:InvokeServer(unpack(args))
 end
 for i = 1, 3 do
@@ -443,26 +420,61 @@ function GetPlayers()
 end
 function autoTrade()
     while AutoTradeBool == true do
-        local Accessories = player.Data.Characters[slot].Accessories:GetChildren()
+        local items = player.Data.Characters[slot][itemType]:GetChildren()
         local args = {
             [1] = "SendRequest",
             [2] = game:GetService("Players")[target]
         }
         player.Remotes.TradeRequestRemote:FireServer(unpack(args))
 
-        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do wait(0.1) end
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do task.wait(0.1) end
 
         for i = 1, 9 do
             local args = {
                 [1] = "AddTradeItem",
                 [2] = {
                     ["Amount"] = 1,
-                    ["Name"] = Accessories[i].Name,
-                    ["ItemType"] = "Accessories",
-                    ["Slot"] = "Slot1"
+                    ["Name"] = items[i].Name,
+                    ["ItemType"] = itemType,
+                    ["Slot"] = slot
                 }
             }
             ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
+            task.wait(0.1)
+        end
+
+        local args2 = {
+            [1] = "AcceptTrade"
+        }
+
+        ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args2))
+
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do task.wait(0.1) end
+    end
+end
+function autoTradeMissing(type: string)
+    while AutoTradeBool == true do
+        local items = player.Data.Characters[slot][type]
+        local MissingAccessories = getMissing(getUniqueItems2(target, "Slot1", type), getUniqueItems2(player.Name, slot, type))
+        local args = {
+            [1] = "SendRequest",
+            [2] = game:GetService("Players")[target]
+        }
+        player.Remotes.TradeRequestRemote:FireServer(unpack(args))
+
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do task.wait(0.1) end
+
+        for i = 1, 9 do
+            local args2 = {
+                [1] = "AddTradeItem",
+                [2] = {
+                    ["Amount"] = 1,
+                    ["Name"] = getItemByName(items, MissingAccessories[i]).Name,
+                    ["ItemType"] = type,
+                    ["Slot"] = "Slot1"
+                }
+            }
+            ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args2))
         end
 
         local args = {
@@ -471,7 +483,7 @@ function autoTrade()
 
         ReplicatedStorage.Remotes:FindFirstChild(player.Name .."-"..target.."TradeRemote"):InvokeServer(unpack(args))
 
-        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do wait(0.1) end
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do task.wait(0.1) end
     end
 end
 function autoAccept()
@@ -479,18 +491,19 @@ function autoAccept()
         local args = {
             [1] = "AcceptRequest"
         }
-        players[target].Remotes.TradeRequestRemote:FireServer(unpack(args))
-        print("Sent accept request to " .. target)
-        wait(delay1)
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do
+            players[target].Remotes.TradeRequestRemote:FireServer(unpack(args))
+            task.wait(1)
+        end
         local args2 = {
             [1] = "AcceptTrade"
         }
-        coroutine.wrap(function()
-            ReplicatedStorage.Remotes:FindFirstChild(target.."-"..player.Name.."TradeRemote"):InvokeServer(unpack(args2))
-        end)()
-        print("Accepted trade with " .. target)
-        wait(delay2)
-        print("looping")
+        while player.PlayerGui.TradeGui.ContainerFrame.Visible == true do 
+            coroutine.wrap(function()
+                ReplicatedStorage.Remotes:FindFirstChild(target.."-"..player.Name.."TradeRemote"):InvokeServer(unpack(args2))
+            end)()
+            task.wait(1)
+        end
     end
 end
 
@@ -548,7 +561,7 @@ function AutoOpenCrates()
                 LogCrateReward(v)
             end
         end
-        wait(0.5)
+        task.wait(0.5)
     end
 end
 
@@ -644,6 +657,9 @@ end)
 local targetDropdown = TradeSection:Dropdown("Target", {},"None","Dropdown", function(t)
     target = t
 end)
+TradeSection:Dropdown("Type", { "Accessories", "Backpack", "BodyParts", "Eggs", "Eyes", "MaterialPalettes", "Pupils", "Palettes", "Pets"}, "Accessories", "Dropdown", function(t)
+    itemType = t
+end)
 TradeSection:Button("Reload Players", function()
     targetDropdown:Refresh(GetPlayers(), true)
 end)
@@ -659,7 +675,7 @@ end)
 TradeSection:Toggle("Auto Trade Missing", false, "Auto Trade", function(t)
     if(t == true) then
         AutoTradeBool = true
-        autoTradeMissing()
+        autoTradeMissing(itemType)
     else
         AutoTradeBool = false
     end
@@ -673,13 +689,6 @@ TradeSection:Toggle("Auto Accept", false, "Auto Accept", function(t)
         AutoAcceptBool = false
     end
 end)
-
-TradeSection:Slider("delay1", 0,10,7,0.5,"Slider", function(t)
-    delay1 = t
-end)
-TradeSection:Slider("delay2", 0,10,7,0.5,"Slider", function(t)
-    delay1 = t
-end)
 --#endregion
 
 --#region Settings
@@ -688,7 +697,7 @@ local SettingsSection = SettingsPage:Section("Settings")
 antiAFK = SettingsSection:Button("Anti AFK", function()
     player.Idled:Connect(function()
         VU:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-        wait(1)
+        task.wait(1)
         VU:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
     end)
 end)
