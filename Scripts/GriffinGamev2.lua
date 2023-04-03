@@ -531,8 +531,8 @@ function AutoOpenCrates()
     while AutoOpenCratesBool do
         local neededItems = getNeededCrateItems(Crate)
         if(#neededItems == 0) then
-            AutoOpenCratesBool = false
-            return
+            AutoOpenCratesToggle:Set(false)
+            break;
         end
         local args = {
             [1] = Crate,
@@ -765,7 +765,7 @@ CratesSection:Button("Open Crates", function()
     end
 end)
 
-CratesSection:Toggle("Auto Open Until Got All Items", false, "Auto Open Until Got All Items", function(t)
+AutoOpenCratesToggle = CratesSection:Toggle("Auto Open Until Got All Items", false, "Auto Open Until Got All Items", function(t)
     if(t == true) then
         AutoOpenCratesBool = true
         getCrateItems(Crate)
