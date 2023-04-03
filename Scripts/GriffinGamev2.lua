@@ -512,7 +512,7 @@ function getNeededCrateItems(crate)
             table.insert(neededItems, v)
         end
     end)
-    NeededItemsLabel:Set("Needed Items: " .. #neededItems)
+    NeededItemsLabel:Set("Needed Items: " .. #neededItems .. "/" .. #CrateItems)
     return neededItems
 end
 
