@@ -518,7 +518,7 @@ end
 
 function getNeededCrateItems(crate)
     local neededItems = {}
-    local currentItems = getUniqueItems(player.Name, "Slot1", Crates[crate].Type)
+    local currentItems = getUniqueItems(target, slot, Crates[crate].Type)
     getCrateItems(crate)
     table.foreach(CrateItems, function(i, v)
         if(not table.find(currentItems, v)) then
@@ -651,26 +651,9 @@ end)
 
 --#region Trading
 local TradeSection = AutoPage:Section("Trade")
-TradeSection:Dropdown("Slot", {"Slot1", "Slot2", "Slot3"},"Slot1","Dropdown", function(t)
-    slot = t
-end)
-local targetDropdown = TradeSection:Dropdown("Target", {},"None","Dropdown", function(t)
-    target = t
-end)
+
 TradeSection:Dropdown("Type", { "Accessories", "Backpack", "BodyParts", "Eggs", "Eyes", "MaterialPalettes", "Pupils", "Palettes", "Pets"}, "Accessories", "Dropdown", function(t)
     itemType = t
-end)
-TradeSection:Button("Reload Players", function()
-    targetDropdown:Refresh(GetPlayers(), true)
-end)
-targetDropdown:Refresh(GetPlayers(), true)
-TradeSection:Toggle("Auto Trade", false, "Auto Trade", function(t)
-    if(t == true) then
-        AutoTradeBool = true
-        autoTrade()
-    else
-        AutoTradeBool = false
-    end
 end)
 TradeSection:Toggle("Auto Trade Missing", false, "Auto Trade", function(t)
     if(t == true) then
@@ -694,7 +677,7 @@ end)
 --#region Settings
 local SettingsSection = SettingsPage:Section("Settings")
 
-antiAFK = SettingsSection:Button("Anti AFK", function()
+SettingsSection:Button("Anti AFK", function()
     player.Idled:Connect(function()
         VU:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
         task.wait(1)
@@ -721,6 +704,25 @@ SettingsSection:Toggle("Disable Treasure Collision", false, "Disable Treasure Co
         end
     end
 end)
+
+SettingsSection:Dropdown("Slot", {"Slot1", "Slot2", "Slot3"},"Slot1","Dropdown", function(t)
+    slot = t
+end)
+local targetDropdown = SettingsSection:Dropdown("Target", {},player.Name,"Dropdown", function(t)
+    target = t
+end)
+SettingsSection:Button("Reload Players", function()
+    targetDropdown:Refresh(GetPlayers(), true)
+end)
+targetDropdown:Refresh(GetPlayers(), true)
+SettingsSection:Toggle("Auto Trade", false, "Auto Trade", function(t)
+    if(t == true) then
+        AutoTradeBool = true
+        autoTrade()
+    else
+        AutoTradeBool = false
+    end
+end)
 --#endregion
 
 --#region Gamepass
@@ -741,12 +743,15 @@ end)
 
 --#region Crates
 local CratesSection = CratesPage:Section("Crates")
+
 NeededItemsLabel = CratesSection:Label("Needed Items: 0")
+
 local CrateSelector = CratesSection:Dropdown("Dropdown", {},"AquaticCrate","Dropdown", function(t)
     Crate = t
     getCrateItems(t)
     getNeededCrateItems(t)
 end)
+
 CrateSelector:Refresh(GetCrates(), true)
 
 CratesSection:Slider("Amount", 1,24,1,1,"Slider", function(t)
