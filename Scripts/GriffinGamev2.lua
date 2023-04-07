@@ -655,6 +655,14 @@ local TradeSection = AutoPage:Section("Trade")
 TradeSection:Dropdown("Type", { "Accessories", "Backpack", "BodyParts", "Eggs", "Eyes", "MaterialPalettes", "Pupils", "Palettes", "Pets"}, "Accessories", "Dropdown", function(t)
     itemType = t
 end)
+TradeSection:Toggle("Auto Trade", false, "Auto Trade", function(t)
+    if(t == true) then
+        AutoTradeBool = true
+        autoTrade()
+    else
+        AutoTradeBool = false
+    end
+end)
 TradeSection:Toggle("Auto Trade Missing", false, "Auto Trade", function(t)
     if(t == true) then
         AutoTradeBool = true
@@ -715,14 +723,6 @@ SettingsSection:Button("Reload Players", function()
     targetDropdown:Refresh(GetPlayers(), true)
 end)
 targetDropdown:Refresh(GetPlayers(), true)
-SettingsSection:Toggle("Auto Trade", false, "Auto Trade", function(t)
-    if(t == true) then
-        AutoTradeBool = true
-        autoTrade()
-    else
-        AutoTradeBool = false
-    end
-end)
 --#endregion
 
 --#region Gamepass
