@@ -519,9 +519,10 @@ end
 function getNeededCrateItems(crate)
     local neededItems = {}
     local currentItems = getUniqueItems(target, slot, Crates[crate].Type)
+    local currentItemsPlayer = getUniqueItems(player.name, "Slot1", Crates[crate].Type)
     getCrateItems(crate)
     table.foreach(CrateItems, function(i, v)
-        if(not table.find(currentItems, v)) then
+        if(not table.find(currentItems, v) and not table.find(currentItemsPlayer, v)) then
             table.insert(neededItems, v)
         end
     end)
