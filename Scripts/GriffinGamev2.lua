@@ -623,6 +623,23 @@ AutoFarmSection:Toggle("Claim Codes", false, "Claim Codes", function(t)
     end
 end)
 
+AutoFarmSection:Button("Eggs 1", function()
+    for _, egg in ipairs(game:GetService("Workspace").Interactions.Event.Egg1:GetChildren()) do
+        player.Character:MoveTo(egg.Position)
+        wait(0.2)
+        local proximityPrompt = egg:WaitForChild("ProximityPrompt")
+        fireproximityprompt(proximityPrompt)
+    end
+end)
+AutoFarmSection:Button("Eggs 2", function()
+    for _, egg in ipairs(game:GetService("Workspace").Interactions.Event.Egg2:GetChildren()) do
+        player.Character:MoveTo(egg.Position)
+        wait(0.2)
+        local proximityPrompt = egg:WaitForChild("ProximityPrompt")
+        fireproximityprompt(proximityPrompt)
+    end
+end)
+
 -- AutoFarmSection:Button("Chocolates1", function()
 --     for _, chocolate in ipairs(game:GetService("Workspace").Interactions.Event.Chocolates1:GetChildren()) do
 --         player.Character:MoveTo(chocolate.Position)
