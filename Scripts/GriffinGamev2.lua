@@ -209,8 +209,8 @@ end
 function getMissing(targetaccs: string, youraccs: string)
     local missing = {}
     for i, v in pairs(youraccs) do
-        if(targetaccs[i] == nil) then
-            table.insert(missing, i)
+        if(targetaccs[v] == nil) then
+            table.insert(missing, v)
         end
     end
     return missing
@@ -218,7 +218,7 @@ end
 
 function getItemByName(items: table, name: string)
     for i, v in ipairs(items:GetChildren()) do
-        if(v.Value == name) then
+        if(v.Name == name) then
             return v
         end
     end
