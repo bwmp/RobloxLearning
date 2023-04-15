@@ -190,36 +190,20 @@ function logItem(Item: table)
     })
 end
 
-function getUniqueItems(user, checkSlot, type)
+function getItems(user, checkSlot, type)
     local values = {}
-    local uniqueValues = {}
+    -- local uniqueValues = {}
     local items = game:GetService("Players")[user].Data.Characters[checkSlot][type]:GetChildren()
     for i, item in ipairs(items) do
-        table.insert(values, item.Value)
+        table.insert(values, item.Name)
     end
 
-    for i, value in ipairs(values) do
-        if not uniqueValues[value] then
-            table.insert(uniqueValues, value)
-        end
-    end
-    return uniqueValues
-end
-
-function getUniqueItems2(user, checkSlot, type)
-    local values = {}
-    local uniqueValues = {}
-    local items = game:GetService("Players")[user].Data.Characters[checkSlot][type]:GetChildren()
-    for i, item in ipairs(items) do
-        table.insert(values, item.Value)
-    end
-
-    for i, value in ipairs(values) do
-        if not uniqueValues[value] then
-            uniqueValues[value] = true
-        end
-    end
-    return uniqueValues
+    -- for i, value in ipairs(values) do
+    --     if not uniqueValues[value] then
+    --         table.insert(uniqueValues, value)
+    --     end
+    -- end
+    return values
 end
 
 function getMissing(targetaccs: string, youraccs: string)
@@ -455,7 +439,7 @@ end
 function autoTradeMissing(type: string)
     while AutoTradeBool == true do
         local items = player.Data.Characters[slot][type]
-        local MissingAccessories = getMissing(getUniqueItems2(target, "Slot1", type), getUniqueItems2(player.Name, slot, type))
+        local MissingAccessories = getMissing(getItems(target, "Slot1", type), getItems(player.Name, slot, type))
         local args = {
             [1] = "SendRequest",
             [2] = game:GetService("Players")[target]
@@ -518,8 +502,9 @@ end
 
 function getNeededCrateItems(crate)
     local neededItems = {}
-    local currentItems = getUniqueItems(target, slot, Crates[crate].Type)
-    local currentItemsPlayer = getUniqueItems(player.name, "Slot1", Crates[crate].Type)
+
+    local currentItems = getItems(target, slot, Crates[crate].Type)
+    local currentItemsPlayer = getItems(player.name, slot, Crates[crate].Type)
     getCrateItems(crate)
     table.foreach(CrateItems, function(i, v)
         if(not table.find(currentItems, v) and not table.find(currentItemsPlayer, v)) then
@@ -633,6 +618,14 @@ AutoFarmSection:Button("Eggs 1", function()
 end)
 AutoFarmSection:Button("Eggs 2", function()
     for _, egg in ipairs(game:GetService("Workspace").Interactions.Event.Egg2:GetChildren()) do
+        player.Character:MoveTo(egg.Position)
+        wait(0.2)
+        local proximityPrompt = egg:WaitForChild("ProximityPrompt")
+        fireproximityprompt(proximityPrompt)
+    end
+end)
+AutoFarmSection:Button("Eggs 3", function()
+    for _, egg in ipairs(game:GetService("Workspace").Interactions.Event.Egg3:GetChildren()) do
         player.Character:MoveTo(egg.Position)
         wait(0.2)
         local proximityPrompt = egg:WaitForChild("ProximityPrompt")
@@ -806,6 +799,5 @@ AutoOpenCratesToggle = CratesSection:Toggle("Auto Open Until Got All Items", fal
         AutoOpenCratesBool = false
     end
 end)
-
 
 --#endregion
