@@ -37,8 +37,9 @@ local LogCratesBool = false
 local AutoTradeBool = false
 local ClaimCodesBool = false
 local AutoOpenEggsBool = false
-local AutoOpenCratesBool = false
 local AutoTradeAllBool = false
+local AutoOpenCratesBool = false
+local AutoFarmAllEggsBool = false
 local farmingSpots = {["Treasure"] = true, ["Trinkets"] = false, ["XP"] = false}
 --#endregion
 
@@ -303,7 +304,22 @@ function print_table(node: table)
 
     print(output_str)
 end
-
+function autoFarmAllEggs()
+    while AutoFarmAllEggsBool do
+        for _, egg in ipairs(game:GetService("Workspace").Interactions.Event:GetDescendants()) do
+            if(AutoFarmAllEggsBool == false) then
+                break
+            end
+            if(egg:IsA("MeshPart") == false) then
+                continue
+            end
+            player.Character:MoveTo(egg.Position)
+            wait(0.2)
+            local proximityPrompt = egg:WaitForChild("ProximityPrompt")
+            fireproximityprompt(proximityPrompt)
+        end
+    end
+end
 function autoDig()
     while AutoDigBool do
         for _, treasureModel in ipairs(treasureHuntMinigame:GetDescendants()) do
@@ -615,6 +631,15 @@ AutoFarmSection:Toggle("Claim Codes", false, "Claim Codes", function(t)
     end
 end)
 
+AutoFarmSection:Toggle("Auto Farm All Eggs", false, "Auto Farm All Eggs", function(t)
+    if(t == true) then
+        AutoFarmAllEggsBool = true
+        autoFarmAllEggs()
+    else
+        AutoFarmAllEggsBool = false
+    end
+end)
+
 AutoFarmSection:Button("Eggs 1", function()
     for _, egg in ipairs(game:GetService("Workspace").Interactions.Event.Egg1:GetChildren()) do
         player.Character:MoveTo(egg.Position)
@@ -632,6 +657,14 @@ AutoFarmSection:Button("Eggs 2", function()
     end
 end)
 AutoFarmSection:Button("Eggs 3", function()
+    for _, egg in ipairs(game:GetService("Workspace").Interactions.Event.Egg3:GetChildren()) do
+        player.Character:MoveTo(egg.Position)
+        wait(0.2)
+        local proximityPrompt = egg:WaitForChild("ProximityPrompt")
+        fireproximityprompt(proximityPrompt)
+    end
+end)
+AutoFarmSection:Button("Eggs 4", function()
     for _, egg in ipairs(game:GetService("Workspace").Interactions.Event.Egg3:GetChildren()) do
         player.Character:MoveTo(egg.Position)
         wait(0.2)
