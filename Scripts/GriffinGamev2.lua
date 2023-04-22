@@ -38,6 +38,7 @@ local AutoTradeBool = false
 local ClaimCodesBool = false
 local AutoOpenEggsBool = false
 local AutoOpenCratesBool = false
+local AutoTradeAllBool = false
 local farmingSpots = {["Treasure"] = true, ["Trinkets"] = false, ["XP"] = false}
 --#endregion
 
@@ -414,10 +415,16 @@ function autoTrade()
         while player.PlayerGui.TradeGui.ContainerFrame.Visible == false do task.wait(0.1) end
 
         for i = 1, 9 do
+            local amount
+            if(AutoTradeAllBool == true) then
+                amount = items[i].Value
+            else
+                amount = 1
+            end
             local args = {
                 [1] = "AddTradeItem",
                 [2] = {
-                    ["Amount"] = 1,
+                    ["Amount"] = amount,
                     ["Name"] = items[i].Name,
                     ["ItemType"] = itemType,
                     ["Slot"] = slot
@@ -666,6 +673,11 @@ local TradeSection = AutoPage:Section("Trade")
 TradeSection:Dropdown("Type", { "Accessories", "Backpack", "BodyParts", "Eggs", "Eyes", "MaterialPalettes", "Pupils", "Palettes", "Pets"}, "Accessories", "Dropdown", function(t)
     itemType = t
 end)
+
+TradeSection:Toggle("Auto Trade All", false, "Auto Trade", function(t)
+    AutoTradeAllBool = t
+end)
+
 TradeSection:Toggle("Auto Trade", false, "Auto Trade", function(t)
     if(t == true) then
         AutoTradeBool = true
