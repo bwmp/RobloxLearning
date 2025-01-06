@@ -1283,13 +1283,13 @@ local win = SolarisLib:New({
     FolderToSave = "MicUp"
 })
 
-local stalls = game:GetService("Workspace").Stalls
+local stalls = game:GetService("Workspace").Booth
 
-local stall1 = stalls.Stall3
-local stall2 = stalls.Stall2
-local stall3 = stalls.Stall1
-local stall4 = stalls.Stall5
-local stall5 = stalls.Stall4
+local stall1 = stalls.Booth03
+local stall2 = stalls.Booth04
+local stall3 = stalls.Booth05
+local stall4 = stalls.Booth01
+local stall5 = stalls.Booth02
 
 local CurrentStall = stall1
 
